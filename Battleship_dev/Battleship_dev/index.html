@@ -15,7 +15,7 @@
 
     <div class="container">
         <div class="row">
-            <div class="col-md-6">
+            <div id="tagetPanel" class="col-md-6 hidden">
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <h3 class="panel-title"><span class="fa fa-rocket"></span> Opponent Area</h3>
@@ -28,6 +28,30 @@
                     </div>
                 </div>
             </div>
+            <div id="fleetPanel" class="col-md-6 hidden">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><span class="fa fa-ship"></span> Available Ships</h3>
+                    </div>
+                    <div class="panel-body">
+                        <dl class="dl-horizontal">
+                            <dt>Aircraft carrier:</dt>
+                            <dd id="len5">IN_CODE</dd>
+                            <dt>Battleship:</dt>
+                            <dd id="len4">IN_CODE</dd>
+                            <dt>Destroyer:</dt>
+                            <dd id="len3">IN_CODE</dd>
+                            <dt>Patrol boat:</dt>
+                            <dd id="len2">IN_CODE</dd>
+                        </dl>
+                        
+                    </div>
+                    <div class="panel-footer">
+                        <h4 class="inline">Remaining Ships: <span id="remainingShips">IN_CODE</span></h4>
+                        
+                    </div>
+                </div>
+            </div>
             <div class="col-md-6">
                 <div class="panel panel-default">
                     <div class="panel-heading">
@@ -35,10 +59,12 @@
                     </div>
                     <div class="panel-body">
                         <canvas id="playerArea" width="400" height="400"></canvas>
+                        <button id="fleetReset" class="btn btn-warning pull-right"><span class="fa fa-undo"></span> Reset</button>
                     </div>
                     <div class="panel-footer">
                         
-                        <p>My fleet status - X: <span id="plrX" class="text-danger"></span>, Y: <span id="plrY" class="text-danger"></span>, Data: <span id="plrD"></span></p>
+                        <button id="fleetDone" class="btn btn-success" disabled><span class=" fa fa-exclamation"></span> Start</button>
+                        <p class="pull-right">My fleet status - X: <span id="plrX" class="text-danger"></span>, Y: <span id="plrY" class="text-danger"></span>, Ship ID: <span id="plrD" class="text-danger"></span></p>
                     </div>
                 </div>
             </div>
