@@ -20,14 +20,24 @@
                     <div class="panel-heading">
                         <h3 class="panel-title"><span class="fa fa-rocket"></span> Opponent Area</h3>
                     </div>
-                    <div class="panel-body">
-                        <canvas id="opponentArea" width="400" height="400"></canvas>
+                    <div class="panel-body ">
+                        <span class="label label-info">Targets: <span id="oppTargets">10</span></span>
+                        <span class="label label-success">Hits: <span id="oppHits">0</span></span>
+                        <span class="label label-danger">Misses: <span id="oppMisses">0</span></span>
+                        <span class="label label-info">Accuracy: <span id="oppAc">0</span></span>
+                        <span class="label label-success">Total Hits: <span id="oppTotal">0</span></span>
+                        <div class="text-center">
+                            <canvas id="opponentArea" width="400" height="400"></canvas>
+                        </div>
+                        <div class="progress">
+                            <div id="playerProgress" class="progress-bar progress-bar-success" style="width: 0">
+                            </div>
+                        </div>
                     </div>
                     <div class="panel-footer">
-                        <button id="fire" class="btn btn-success"><span class="fa fa-rocket"></span> Fire</button>
-                        <button id="targetRandom" class="btn btn-warning"><span class="fa fa-question"></span> Auto</button>
-                        <span>
-                        Hits: <span id="oppHits">0</span>, Misses: <span id="oppMisses">0</span>, Accuracy: <span id="oppAc">0</span>%, Total Hits: <span id="oppTotal">0</span></span>
+                        <button id="fire" class="btn btn-success"><span class="fa fa-rocket"></span> <u>F</u>ire</button>
+                        <button id="targetRandom" class="btn btn-warning"><span class="fa fa-crosshairs"></span> Auto <u>T</u>arget</button>
+                        <button id="startOver" class="btn btn-danger"><span class="fa fa-times"></span> <u>S</u>tart Over</button>
                     </div>
                 </div>
             </div>
@@ -61,17 +71,25 @@
                         <h3 class="panel-title"><span class="fa fa-shield"></span> Player Area</h3>
                     </div>
                     <div class="panel-body">
-                        <canvas id="playerArea" width="400" height="400"></canvas>
+                        <span class="label label-warning">Total Hits:: <span id="plrTotal">0</span></span>
+                        <span class="label label-danger">Ships Lost: <span id="plrLost">0</span></span>
+                        <span id="plrStats" class="hidden">
+                            <span class="label label-info">Ship ID: <span id="plrID">0</span></span>
+                            <span class="label label-danger">Damage: <span id="plrDamage">0</span>%</span>
+                        </span>
+                        <div class="text-center">
+                            <canvas id="playerArea" width="400" height="400"></canvas>
+                        </div>
+                        <div class="progress">
+                            <div id="opponentProgress" class="progress-bar progress-bar-danger" style="width: 0">
+                            </div>
+                        </div>
                     </div>
                     <div class="panel-footer">
 
-                        <button id="fleetReset" class="btn btn-danger"><span class="fa fa-undo"></span> Reset</button>
-                        <button id="fleetRandom" class="btn btn-warning"><span class="fa fa-question"></span> Auto</button>
-                        <button id="fleetDone" class="btn btn-success" disabled><span class=" fa fa-exclamation"></span> Start</button>
-                        <span>
-                            Total Hits: <span id="plrTotal"></span>, Ships Lost: <span id="plrLost">0</span>
-                            <span id="plrStats" class="hidden"> Ship ID: <span id="plrID"></span>, Damage: <span id="plrDamage"></span>%</span>
-                        </span>
+                        <button id="fleetDone" class="btn btn-success" disabled><span class=" fa fa-check"></span> <u>R</u>eady</button>
+                        <button id="fleetRandom" class="btn btn-warning"><span class="fa fa-ship"></span> Auto <u>P</u>lace</button>
+                        <button id="fleetReset" class="btn btn-danger"><span class="fa fa-undo"></span> <u>C</u>lear</button>
                     </div>
                 </div>
             </div>

@@ -23,21 +23,36 @@ var main = function () {
 
     function DrawHit(ctx) {
         return function (row, column) {
-            var x, y, width, height;
 
             // Draw circle.
-            DrawCircle(ctx, 'white', 0.8)(row, column);
-            DrawCircle(ctx, 'red', 0.7)(row, column);
+            DrawCircle(ctx, 'white', 0.4)(row, column);
+            DrawCircle(ctx, 'red', 0.3)(row, column);
         };
     }
 
     function DrawMiss(ctx) {
         return function (row, column) {
-            var x, y, width, height;
 
             // Draw circle.
-            DrawCircle(ctx, 'white', 0.8)(row, column);
-            DrawCircle(ctx, 'blue', 0.7)(row, column);
+            DrawCircle(ctx, 'white', 0.4)(row, column);
+            DrawCircle(ctx, 'blue', 0.3)(row, column);
+        };
+    }
+
+    function DrawText(ctx) {
+        return function (x, y, width, text, size) {
+
+            if (!size) {
+                size = game.cellSize / 2;
+            }
+            ctx.beginPath();
+            ctx.clearRect(x - 8, y - 24, width + 20, size + 16);
+            ctx.closePath();
+
+            ctx.beginPath();
+            ctx.fillStyle = 'white';
+            ctx.font = size + 'px Arial';
+            ctx.fillText(text, x, y, width);
         };
     }
 
@@ -64,14 +79,58 @@ var main = function () {
             // Clear cell first.
             DrawCell(ctx)(row, column);
 
+            x = row * game.cellSize + 5;
+            y = column * game.cellSize + 5;
+            width = game.cellSize - 10;
+            height = game.cellSize - 10;
+            ctx.fillStyle = 'grey';
+
+            ctx.beginPath();
+            ctx.fillRect(x, y, width, height);
+        };
+    }
+
+    function DrawShip(ctx) {
+        return function (row, column, direction, position) {
+            var x, y, width, height;
+
+            // Clear cell first.
+            DrawCell(ctx)(row, column);
+
             x = row * game.cellSize;
             y = column * game.cellSize;
             width = game.cellSize;
             height = game.cellSize;
+
             ctx.fillStyle = 'grey';
 
+            if (direction ==='h') {
+                x += 5;
+                width -= 10;
+
+                switch (position) {
+                    case 0: // Front.
+                        y += 5;
+                        break;
+                    case 2: // Rear.
+                        height -= 5;
+                        break;
+                }
+            } else {
+                y += 5;
+                height -= 10;
+
+                switch (position) {
+                    case 0: // Front.
+                        x += 5;
+                        break;
+                    case 2: // Rear.
+                        width -= 5;
+                        break;
+                }
+            }
+
             ctx.beginPath();
-            ctx.clearRect(x, y, width, height);
             ctx.fillRect(x, y, width, height);
         };
     }
@@ -122,7 +181,9 @@ var main = function () {
             target: DrawTarget(ctx),
             select: DrawSelect(ctx),
             hit: DrawHit(ctx),
-            miss: DrawMiss(ctx)
+            miss: DrawMiss(ctx),
+            text: DrawText(ctx),
+            ship: DrawShip(ctx)
         };
     }
 
@@ -250,6 +311,9 @@ var main = function () {
 
     function NewGame() {
 
+        $('#tagetPanel').addClass('hidden');
+        $('#plrStats').addClass('hidden');
+
         player = ResetPlayer('player');
         opponent = ResetPlayer('opponent');
 
@@ -306,7 +370,7 @@ var main = function () {
             }
 
             if (show) {
-                draw.select(x, y);
+                draw.ship(x, y, direction, (i < 1 ? 0 : (i + 1 === size ? 2 : 1)));
             }
             player.grid[x][y].ship = id;
 
@@ -421,6 +485,10 @@ var main = function () {
         for (x in grid) {
             for (y in grid[x]) {
                 if (grid[x][y].target && grid[x][y].turn === game.turn) {
+
+                    if (!hideMiss) {
+                        draw.cell(x, y);
+                    }
                     if (grid[x][y].ship) {
                         // Hit.
                         grid[x][y].hit = true;
@@ -472,6 +540,10 @@ var main = function () {
         NewGame();
         // Click events.
 
+        $('#startOver').click(function (event) {
+            NewGame();
+        });
+
         $('#fleetReset').click(function (event) {
             event.preventDefault();
 
@@ -510,7 +582,7 @@ var main = function () {
             d = GetData('opponent')(x, y);
             $('#oppX').text(x);
             $('#oppY').text(y);
-            $('#oppD').text('Target: ' + d.target);
+            $('#oppTargets').text(player.count - GetTargetCount(opponent.grid));
 
         });
 
@@ -608,6 +680,7 @@ var main = function () {
             event.preventDefault();
 
             CreateRandomTargets(player, opponent, true);
+            $('#oppTargets').text(player.count - GetTargetCount(opponent.grid));
         });
 
         $('#fire').click(function (event) {
@@ -626,11 +699,15 @@ var main = function () {
                 $('#oppAc').text(Math.round(playerScore.hits / player.count * 100));
                 $('#oppTotal').text(opponent.score.hits);
                 $('#plrTotal').text(player.score.hits);
+                $('#plrStats').addClass('hidden');
 
                 ships = UpdatePlayerShips(player);
                 UpdatePlayerShips(opponent);
 
                 $('#plrLost').text(10 - ships);
+                $('#oppTargets').text(player.count);
+                $('#playerProgress').attr('style', 'width: ' + Math.round(opponent.score.hits / 34 * 100).toString() + '%;');
+                $('#opponentProgress').attr('style', 'width: ' + Math.round(player.score.hits / 34 * 100).toString() + '%;');
 
                 game.turn += 1;
                 // Check for winner.
@@ -639,13 +716,13 @@ var main = function () {
                     switch (0) {
                         case player.count + opponent.count:
                             // Tie.
-                            alert('Tied Game');
+                            draw.text(100, 190, 200, 'Game Over - Tie');
                             break;
                         case player.count:
-                            alert('Computer Wins');
+                            draw.text(100, 190, 200, 'Game Over - Computer Wins');
                             break;
                         case opponent.count:
-                            alert('Player Wins');
+                            draw.text(100, 190, 200, 'Game Over - You Win');
                             break;
                         default:
 
@@ -659,6 +736,31 @@ var main = function () {
         });
 
         CreateRandomFleet(opponent, false);
+
+        $('body').on('keydown', function (event) {
+            switch (event.which) {
+                case 67: // C - Clear fleet.
+                    $('#fleetReset').click();
+                    break;
+                case 80: // P - Auto place fleet.
+                    $('#fleetRandom').click();
+                    break;
+                case 82: // R - Ready, start.
+                    $('#fleetDone').click();
+                    break;
+                case 83: // S - Start over.
+                    $('#startOver').click();
+                    break;
+                case 84: // T - Auto target.
+                    $('#targetRandom').click();
+                    break;
+                case 70: // F - Fire.
+                    $('#fire').click();
+                    break;
+                default:
+
+            }
+        });
 
     }
 
