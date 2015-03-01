@@ -562,7 +562,7 @@ var main = function () {
                     }
                     if (size && HasShip(player, size)) {
 
-                        if (AddShip(player, startPos.x, startPos.y, direction, size)) {
+                        if (AddShip(player, startPos.x, startPos.y, direction, size, true)) {
 
                             ResetFleet();
                         }
@@ -582,8 +582,10 @@ var main = function () {
             }
 
             id = player.grid[x][y].ship;
-            hits = player.ships[id].hits;
-            shipSize = player.ships[id].size;
+            if (id) {
+                hits = player.ships[id].hits;
+                shipSize = player.ships[id].size;
+            }
 
             $('#plrDamage').text(Math.round(hits / shipSize * 100));
             $('#plrID').text(id);
