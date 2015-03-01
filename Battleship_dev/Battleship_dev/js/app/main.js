@@ -5,6 +5,42 @@ var main = function () {
 
     // Methods
 
+    function DrawCircle(ctx, color, size) {
+        return function (row, column) {
+            var x, y, width, height;
+
+            // Draw circle.
+            x = (row * game.cellSize) + (game.cellSize / 2);
+            y = (column * game.cellSize) + (game.cellSize / 2);
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, (game.cellSize / 2) * size, 0, 2 * Math.PI);
+            ctx.stroke();
+            ctx.fill();
+            ctx.closePath();
+        };
+    }
+
+    function DrawHit(ctx) {
+        return function (row, column) {
+            var x, y, width, height;
+
+            // Draw circle.
+            DrawCircle(ctx, 'white', 0.8)(row, column);
+            DrawCircle(ctx, 'red', 0.7)(row, column);
+        };
+    }
+
+    function DrawMiss(ctx) {
+        return function (row, column) {
+            var x, y, width, height;
+
+            // Draw circle.
+            DrawCircle(ctx, 'white', 0.8)(row, column);
+            DrawCircle(ctx, 'blue', 0.7)(row, column);
+        };
+    }
+
     function DrawCell(ctx) {
         return function (row, column) {
             var x, y, width, height;
@@ -84,7 +120,9 @@ var main = function () {
         return {
             cell: DrawCell(ctx),
             target: DrawTarget(ctx),
-            select: DrawSelect(ctx)
+            select: DrawSelect(ctx),
+            hit: DrawHit(ctx),
+            miss: DrawMiss(ctx)
         };
     }
 
@@ -94,7 +132,7 @@ var main = function () {
 
         for (r = 0; r < data.length; r++) {
             for (c = 0; c < data[r].length; c++) {
-                if (data[r][c].target) {
+                if (data[r][c].target && data[r][c].turn === game.turn) {
                     count += 1;
                 }
             }
@@ -112,9 +150,11 @@ var main = function () {
         if (!data[row][column].target && count < available) {
             draw.target(row, column);
             data[row][column].target = true;
+            data[row][column].turn = game.turn;
         } else {
             draw.cell(row, column);
             data[row][column].target = false;
+            data[row][column].turn = 0;
         }
     }
 
@@ -169,7 +209,7 @@ var main = function () {
             for (y = 0; y < columns; y += 1) {
                 // column
                 draw.cell(x, y);
-                data[x][y] = { ship: 0, hit: false, target: false };
+                data[x][y] = { ship: 0, hit: false, target: false, turn: 0 };
             }
         }
 
@@ -184,10 +224,10 @@ var main = function () {
             count: 0,
             grid: [],
             available: {
-                len5: 2,
-                len4: 2,
-                len3: 4,
-                len2: 2
+                5: 2,
+                4: 2,
+                3: 4,
+                2: 2
             }
         };
     }
@@ -198,7 +238,7 @@ var main = function () {
         count = 0;
 
         for (ship in player.available) {
-            $('#' + ship).text(player.available[ship]);
+            $('#len' + ship).text(player.available[ship]);
             count += player.available[ship];
         }
 
@@ -217,13 +257,14 @@ var main = function () {
         ResetFleet();
 
         game.state = 0;
+        game.turn = 1;
     }
 
     function HasShip(data, size) {
         var ship;
 
         for (ship in data.available) {
-            if ('len' + size === ship && data.available[ship] > 0) {
+            if (size.toString() === ship && data.available[ship] > 0) {
                 return true;
             }
         }
@@ -231,10 +272,118 @@ var main = function () {
         return;
     }
 
+    function AddShip(player, x, y, direction, size, show) {
+        var i, draw, id;
+
+        draw = new Draw(player.area);
+        id = player.count + 1;
+
+
+        function Undo(count) {
+            var i;
+
+            for (i = count; i >= 0; i -= 1) {
+
+                if (direction === 'h') {
+                    x -= 1;
+                } else {
+                    y -= 1;
+                }
+
+                draw.cell(x, y);
+                player.grid[x][y].ship = 0;
+
+            }
+        }
+
+        for (i = 0; i < size; i += 1) {
+
+            if (player.grid[x][y].ship) {
+                Undo(i - 1);
+                return;
+            }
+
+            if (show) {
+                draw.select(x, y);
+            }
+            player.grid[x][y].ship = id;
+
+            if (direction === 'h') {
+                y += 1;
+            } else {
+                x += 1;
+            }
+
+        }
+
+        player.count += 1;
+        player.ships[player.count] = { size: size, hits: 0 };
+        player.available[size] -= 1;
+
+        return id;
+    }
+
+    function GetPositionFromIndex(index) {
+        var x, y;
+
+        y = index % 10;
+        x = Math.floor(index / 10);
+
+        return { x: x, y: y };
+    }
+
+    function GetRandomPosition(player, size) {
+        var position, i, x, y;
+
+        position = GetPositionFromIndex(Math.floor((Math.random() * 100)));
+        position.direction = (Math.floor((Math.random() * 2)) ? 'h' : 'v');
+
+        if (position.direction === 'h') {
+            // Horizontal.
+            if (position.y + size >= game.size - 1) {
+                position.y = game.size - size - 1;
+            }
+        } else {
+            // Vertical.
+            if (position.x + size >= game.size - 1) {
+                position.x = game.size - size - 1;
+            }
+        }
+
+        x = position.x;
+        y = position.y;
+
+        for (i = 0; i < size; i++) {
+            if (player.grid[x][y].ship) {
+                // Occupied.
+                return GetRandomPosition(player, size);
+            }
+            if (position.direction === 'h') {
+                y += 1;
+            } else {
+                x += 1;
+            }
+        }
+
+        return position
+    }
+
+    function CreateRandomFleet(player, show) {
+        var position, a, i, count;
+
+        for (a in player.available) {
+            count = player.available[a];
+            for (i = 0; i < count; i += 1) {
+
+                position = GetRandomPosition(player, parseInt(a, 10));
+                AddShip(player, position.x, position.y, position.direction, parseInt(a, 10), show);
+            }
+        }
+    }
+
     function Load() {
 
         NewGame();
-
         // Click events.
 
         $('#fleetReset').click(function (event) {
@@ -245,6 +394,19 @@ var main = function () {
                 player = ResetPlayer('player');
                 player.grid = CreateGrid(player.area, game.size);
                 ResetFleet();
+            }
+        });
+
+        $('#fleetRandom').click(function (event) {
+            event.preventDefault();
+
+            $('#fleetReset').click();
+
+            if (game.state === 0) {
+
+                CreateRandomFleet(player, true);
+                ResetFleet();
+                $('#fleetDone').prop('disabled', false);
             }
         });
 
@@ -291,8 +453,8 @@ var main = function () {
                             } else {
                                 endPos = { x: x, y: y };
                             }
-                            size = y - startPos.y + 1;
-                            direction = 'v';
+                            size = endPos.y - startPos.y + 1;
+                            direction = 'h';
                             break;
                         case y === startPos.y:
                             if (x < startPos.x) {
@@ -303,51 +465,27 @@ var main = function () {
                             } else {
                                 endPos = { x: x, y: y };
                             }
-                            size = x - startPos.x + 1;
-                            endPos = { x: x, y: y };
-                            direction = 'h';
+                            size = endPos.x - startPos.x + 1;
+                            direction = 'v';
                             break;
                         default:
                             draw.cell(startPos.x, startPos.y);
                             startPos = { x: x, y: y };
                             endPos = undefined;
-                            draw.select(x, y);
+                            draw.select(startPos.x, startPos.y);
                     }
-                    if (endPos && HasShip(player, size)) {
+                    if (size && HasShip(player, size)) {
 
-                        player.count += 1;
-                        player.ships[player.count] = { size: size, hits: 0 };
+                        if (AddShip(player, startPos.x, startPos.y, direction, size)) {
 
-                        if (direction === 'h') {
-                            for (i = startPos.x; i <= startPos.x + size - 1; i += 1) {
-                                if (player.grid[i][y].ship) {
-                                    $('#fleetReset').click();
-                                    startPos = undefined;
-                                    endPos = undefined;
-                                    return;
-                                }
-                                draw.select(i, y);
-                                player.grid[i][y].ship = player.count;
-                            }
-                        } else {
-                            for (i = startPos.y; i <= startPos.y + size - 1; i += 1) {
-                                if (player.grid[x][i].ship) {
-                                    $('#fleetReset').click();
-                                    startPos = undefined;
-                                    endPos = undefined;
-                                    return;
-                                }
-                                draw.select(x, i);
-                                player.grid[x][i].ship = player.count;
-                            }
+                            ResetFleet();
                         }
-                        player.available['len' + size] -= 1;
-                        ResetFleet();
                         startPos = undefined;
                         endPos = undefined;
+
                     } else {
                         draw.cell(startPos.x, startPos.y);
-                        draw.cell(x, y);
+                        draw.cell(endPos.x, endPos.y);
                         startPos = undefined;
                         endPos = undefined;
                     }
@@ -369,7 +507,47 @@ var main = function () {
             $('#fleetPanel').addClass('hidden');
             $('#tagetPanel').removeClass('hidden');
             game.state = 1;
+            // Set opponent targets.
+
         });
+
+        $('#fire').click(function (event) {
+            if (game.state === 1) {
+                var oppX, oppY, plrX, plrY, draw;
+
+                draw = new Draw(opponent.area);
+
+                // Show player hits.
+                for (oppX in opponent.grid) {
+                    for (oppY in opponent.grid[oppX]) {
+                        if (opponent.grid[oppX][oppY].target) {
+                            if (opponent.grid[oppX][oppY].ship) {
+                                // Hit.
+                                opponent.grid[oppX][oppY].hit = true;
+
+                                opponent.ships[opponent.grid[oppX][oppY].ship].hits += 1;
+                                draw.hit(oppX, oppY);
+                            } else {
+                                // Miss.
+                                draw.miss(oppX, oppY);
+                            }
+                            opponent.grid[oppX][oppY].turn = game.turn;
+                        }
+                    }
+                }
+                // Show opponent hits.
+
+                // Check for winner.
+                if (false) {
+                    // Game over.
+                    game.state = 2;
+                }
+                game.turn += 1;
+            }
+        });
+
+        CreateRandomFleet(opponent, false);
+
     }
 
     // Constructor.
@@ -378,7 +556,8 @@ var main = function () {
         game = {
             state: 1,
             size: 10,
-            cellSize: 40
+            cellSize: 40,
+            turn: 1
         };
         // States: 0 positioning, 1 targeting, 2 firing, 3 over
 

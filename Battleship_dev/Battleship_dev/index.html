@@ -24,7 +24,8 @@
                         <canvas id="opponentArea" width="400" height="400"></canvas>
                     </div>
                     <div class="panel-footer">
-                        <p>Opponent's status - X: <span id="oppX" class="text-danger"></span>, Y: <span id="oppY" class="text-danger"></span>, Data: <span id="oppD"></span></p>
+                        <button id="fire" class="btn btn-success"><span class="fa fa-rocket"></span> Fire</button>
+                        <span>Opponent's status - X: <span id="oppX" class="text-danger"></span>, Y: <span id="oppY" class="text-danger"></span>, Data: <span id="oppD"></span></span>
                     </div>
                 </div>
             </div>
@@ -59,12 +60,13 @@
                     </div>
                     <div class="panel-body">
                         <canvas id="playerArea" width="400" height="400"></canvas>
-                        <button id="fleetReset" class="btn btn-warning pull-right"><span class="fa fa-undo"></span> Reset</button>
                     </div>
                     <div class="panel-footer">
                         
+                        <button id="fleetReset" class="btn btn-danger"><span class="fa fa-undo"></span> Reset</button>
+                        <button id="fleetRandom" class="btn btn-warning"><span class="fa fa-question"></span> Auto</button>
                         <button id="fleetDone" class="btn btn-success" disabled><span class=" fa fa-exclamation"></span> Start</button>
-                        <p class="pull-right">My fleet status - X: <span id="plrX" class="text-danger"></span>, Y: <span id="plrY" class="text-danger"></span>, Ship ID: <span id="plrD" class="text-danger"></span></p>
+                        <span>My fleet status - X: <span id="plrX" class="text-danger"></span>, Y: <span id="plrY" class="text-danger"></span>, Ship ID: <span id="plrD" class="text-danger"></span></span>
                     </div>
                 </div>
             </div>
