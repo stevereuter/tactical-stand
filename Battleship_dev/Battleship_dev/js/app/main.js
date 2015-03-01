@@ -141,20 +141,21 @@ var main = function () {
         return count;
     }
 
-    function SetTarget(data, row, column, available) {
-        var draw, count;
+    function SetTarget(opponent, row, column, show, count) {
+        var draw;
 
         draw = new Draw(opponent.area);
-        count = GetTargetCount(opponent.grid);
 
-        if (!data[row][column].target && count < available) {
-            draw.target(row, column);
-            data[row][column].target = true;
-            data[row][column].turn = game.turn;
+        if (!opponent.grid[row][column].target && (GetTargetCount(opponent.grid) < count)) {
+            if (show) {
+                draw.target(row, column);
+            }
+            opponent.grid[row][column].target = true;
+            opponent.grid[row][column].turn = game.turn;
         } else {
             draw.cell(row, column);
-            data[row][column].target = false;
-            data[row][column].turn = 0;
+            opponent.grid[row][column].target = false;
+            opponent.grid[row][column].turn = 0;
         }
     }
 
@@ -228,7 +229,8 @@ var main = function () {
                 4: 2,
                 3: 4,
                 2: 2
-            }
+            },
+            score: { hits: 0, misses: 0 }
         };
     }
 
@@ -323,6 +325,10 @@ var main = function () {
         return id;
     }
 
+    function CreateRandomIndex(gridSize) {
+        return Math.floor((Math.random() * gridSize));
+    }
+
     function GetPositionFromIndex(index) {
         var x, y;
 
@@ -335,7 +341,7 @@ var main = function () {
     function GetRandomPosition(player, size) {
         var position, i, x, y;
 
-        position = GetPositionFromIndex(Math.floor((Math.random() * 100)));
+        position = GetPositionFromIndex(CreateRandomIndex(game.size * game.size));
         position.direction = (Math.floor((Math.random() * 2)) ? 'h' : 'v');
 
         if (position.direction === 'h') {
@@ -381,6 +387,86 @@ var main = function () {
         }
     }
 
+    function GetRandomTargetPosition(grid) {
+        var position;
+
+        position = GetPositionFromIndex(CreateRandomIndex(game.size * game.size));
+
+        if (grid[position.x][position.y].target) {
+            return GetRandomTargetPosition(grid);
+        } else {
+            return position;
+        }
+    }
+
+    function CreateRandomTargets(player, opponent, show) {
+        var i, count, position;
+
+        count = (player.count - GetTargetCount(opponent.grid));
+
+        for (i = 0; i < count; i += 1) {
+            position = GetRandomTargetPosition(opponent.grid);
+            SetTarget(opponent, position.x, position.y, show, player.count);
+        }
+    }
+
+    function ShowHits(grid, player, hideMiss) {
+        var x, y, draw, hits, misses;
+
+        draw = new Draw(player.area);
+        hits = 0;
+        misses = 0;
+
+        // Show player hits.
+        for (x in grid) {
+            for (y in grid[x]) {
+                if (grid[x][y].target && grid[x][y].turn === game.turn) {
+                    if (grid[x][y].ship) {
+                        // Hit.
+                        grid[x][y].hit = true;
+
+                        draw.hit(x, y);
+                        player.score.hits += 1;
+                        hits += 1;
+                    } else {
+                        // Miss.
+                        if (!hideMiss) {
+                            draw.miss(x, y);
+                        }
+                        player.score.misses += 1;
+                        misses += 1;
+                    }
+                    grid[x][y].turn = game.turn;
+                }
+            }
+        }
+
+        return { hits: hits, misses: misses };
+    }
+
+    function UpdatePlayerShips(player) {
+        var x, y, shipID, i, count;
+
+        for (x in player.grid) {
+            for (y in player.grid[x]) {
+                if (player.grid[x][y].hit && player.grid[x][y].turn === game.turn) {
+                    shipID = player.grid[x][y].ship;
+                    player.ships[shipID].hits += 1;
+                }
+            }
+        }
+
+        count = 0;
+
+        for (i in player.ships) {
+            if (player.ships[i].size > player.ships[i].hits) {
+                count += 1;
+            }
+        }
+        player.count = count;
+        return count;
+    }
+
     function Load() {
 
         NewGame();
@@ -418,7 +504,7 @@ var main = function () {
 
             if (game.state === 1) {
                 // Set targets.
-                SetTarget(opponent.grid, x, y, player.count);
+                SetTarget(opponent, x, y, true, player.count);
             }
 
             d = GetData('opponent')(x, y);
@@ -429,7 +515,7 @@ var main = function () {
         });
 
         player.area.click(function (event) {
-            var x, y, i, size, draw, direction;
+            var x, y, i, size, hits, id, shipSize, draw, direction;
 
             draw = new Draw(player.area);
 
@@ -495,9 +581,14 @@ var main = function () {
                 }
             }
 
-            $('#plrX').text(x);
-            $('#plrY').text(y);
-            $('#plrD').text(player.grid[x][y].ship);
+            id = player.grid[x][y].ship;
+            hits = player.ships[id].hits;
+            shipSize = player.ships[id].size;
+
+            $('#plrDamage').text(Math.round(hits / shipSize * 100));
+            $('#plrID').text(id);
+
+            $('#plrStats').removeClass('hidden');
         });
 
         $('#fleetDone').click(function (event) {
@@ -508,41 +599,60 @@ var main = function () {
             $('#tagetPanel').removeClass('hidden');
             game.state = 1;
             // Set opponent targets.
+            CreateRandomTargets(opponent, player);
+        });
 
+        $('#targetRandom').click(function (event) {
+            event.preventDefault();
+
+            CreateRandomTargets(player, opponent, true);
         });
 
         $('#fire').click(function (event) {
             if (game.state === 1) {
-                var oppX, oppY, plrX, plrY, draw;
+                var draw, playerScore, opponentScore, ships;
 
                 draw = new Draw(opponent.area);
 
                 // Show player hits.
-                for (oppX in opponent.grid) {
-                    for (oppY in opponent.grid[oppX]) {
-                        if (opponent.grid[oppX][oppY].target) {
-                            if (opponent.grid[oppX][oppY].ship) {
-                                // Hit.
-                                opponent.grid[oppX][oppY].hit = true;
-
-                                opponent.ships[opponent.grid[oppX][oppY].ship].hits += 1;
-                                draw.hit(oppX, oppY);
-                            } else {
-                                // Miss.
-                                draw.miss(oppX, oppY);
-                            }
-                            opponent.grid[oppX][oppY].turn = game.turn;
-                        }
-                    }
-                }
+                playerScore = ShowHits(opponent.grid, opponent);
                 // Show opponent hits.
+                opponentScore = ShowHits(player.grid, player, true);
+                // Update UI scores.
+                $('#oppHits').text(playerScore.hits);
+                $('#oppMisses').text(playerScore.misses);
+                $('#oppAc').text(Math.round(playerScore.hits / player.count * 100));
+                $('#oppTotal').text(opponent.score.hits);
+                $('#plrTotal').text(player.score.hits);
 
-                // Check for winner.
-                if (false) {
-                    // Game over.
-                    game.state = 2;
-                }
+                ships = UpdatePlayerShips(player);
+                UpdatePlayerShips(opponent);
+
+                $('#plrLost').text(10 - ships);
+
                 game.turn += 1;
+                // Check for winner.
+                if (player.count === 0 || opponent.count === 0) {
+                    // Game over.
+                    switch (0) {
+                        case player.count + opponent.count:
+                            // Tie.
+                            alert('Tied Game');
+                            break;
+                        case player.count:
+                            alert('Computer Wins');
+                            break;
+                        case opponent.count:
+                            alert('Player Wins');
+                            break;
+                        default:
+
+                    }
+                    game.state = 2;
+                } else {
+                    // Set opponent targets.
+                    CreateRandomTargets(opponent, player);
+                }
             }
         });
 

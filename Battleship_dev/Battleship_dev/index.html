@@ -25,7 +25,9 @@
                     </div>
                     <div class="panel-footer">
                         <button id="fire" class="btn btn-success"><span class="fa fa-rocket"></span> Fire</button>
-                        <span>Opponent's status - X: <span id="oppX" class="text-danger"></span>, Y: <span id="oppY" class="text-danger"></span>, Data: <span id="oppD"></span></span>
+                        <button id="targetRandom" class="btn btn-warning"><span class="fa fa-question"></span> Auto</button>
+                        <span>
+                        Hits: <span id="oppHits">0</span>, Misses: <span id="oppMisses">0</span>, Accuracy: <span id="oppAc">0</span>%, Total Hits: <span id="oppTotal">0</span></span>
                     </div>
                 </div>
             </div>
@@ -45,11 +47,11 @@
                             <dt>Patrol boat:</dt>
                             <dd id="len2">IN_CODE</dd>
                         </dl>
-                        
+
                     </div>
                     <div class="panel-footer">
                         <h4 class="inline">Remaining Ships: <span id="remainingShips">IN_CODE</span></h4>
-                        
+
                     </div>
                 </div>
             </div>
@@ -62,16 +64,19 @@
                         <canvas id="playerArea" width="400" height="400"></canvas>
                     </div>
                     <div class="panel-footer">
-                        
+
                         <button id="fleetReset" class="btn btn-danger"><span class="fa fa-undo"></span> Reset</button>
                         <button id="fleetRandom" class="btn btn-warning"><span class="fa fa-question"></span> Auto</button>
                         <button id="fleetDone" class="btn btn-success" disabled><span class=" fa fa-exclamation"></span> Start</button>
-                        <span>My fleet status - X: <span id="plrX" class="text-danger"></span>, Y: <span id="plrY" class="text-danger"></span>, Ship ID: <span id="plrD" class="text-danger"></span></span>
+                        <span>
+                            Total Hits: <span id="plrTotal"></span>, Ships Lost: <span id="plrLost">0</span>
+                            <span id="plrStats" class="hidden"> Ship ID: <span id="plrID"></span>, Damage: <span id="plrDamage"></span>%</span>
+                        </span>
                     </div>
                 </div>
             </div>
         </div>
-    </div class="container">
+    </div>
     <script src="js/jquery-2.1.3.js"></script>
     <script src="js/bootstrap.js"></script>
     <script src="js/app/main.js"></script>
