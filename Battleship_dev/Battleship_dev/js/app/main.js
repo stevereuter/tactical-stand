@@ -321,9 +321,13 @@ var main = function () {
         player.grid = CreateGrid(player.area, game.size);
 
         ResetFleet();
+        CreateRandomFleet(opponent, false);
 
         game.state = 0;
         game.turn = 1;
+
+        $('#playerProgress').attr('style', 'width: ' +Math.round(opponent.score.hits / 34 * 100).toString() + '%;');
+        $('#opponentProgress').attr('style', 'width: ' +Math.round(player.score.hits / 34 * 100).toString() + '%;');
     }
 
     function HasShip(data, size) {
@@ -569,19 +573,30 @@ var main = function () {
         });
 
         opponent.area.click(function (event) {
-            var x, y, d;
+            var x, y;
 
             x = Math.floor(event.offsetX / game.cellSize);
             y = Math.floor(event.offsetY / game.cellSize);
 
-            if (game.state === 1) {
-                // Set targets.
-                SetTarget(opponent, x, y, true, player.count);
+            if (x < 0) {
+                x = 0;
+            }
+            if (y < 0) {
+                y = 0;
             }
 
-            d = GetData('opponent')(x, y);
-            $('#oppX').text(x);
-            $('#oppY').text(y);
+            if ((game.state === 1 || game.state === 2) && (!opponent.grid[x][y].turn || opponent.grid[x][y].turn === game.turn)) {
+                // Set targets.
+                SetTarget(opponent, x, y, true, player.count);
+
+                if (!GetTargetCount(opponent.grid) && game.state !== 1) {
+                    game.state = 1;
+                } else {
+                    game.state = 2;
+                }
+            }
+
+
             $('#oppTargets').text(player.count - GetTargetCount(opponent.grid));
 
         });
@@ -593,6 +608,13 @@ var main = function () {
 
             x = Math.floor(event.offsetX / game.cellSize);
             y = Math.floor(event.offsetY / game.cellSize);
+
+            if (x < 0) {
+                x = 0;
+            }
+            if (y < 0) {
+                y = 0;
+            }
 
             if (game.state === 0 && player.count < 10 && !player.grid[x][y].ship) {
                 // Set fleet.
@@ -679,12 +701,18 @@ var main = function () {
         $('#targetRandom').click(function (event) {
             event.preventDefault();
 
-            CreateRandomTargets(player, opponent, true);
-            $('#oppTargets').text(player.count - GetTargetCount(opponent.grid));
+            if (game.state === 1 || game.state === 2) {
+                CreateRandomTargets(player, opponent, true);
+                $('#oppTargets').text(player.count - GetTargetCount(opponent.grid));
+
+                if (game.state === 1) {
+                    game.state = 2;
+                }
+            }
         });
 
         $('#fire').click(function (event) {
-            if (game.state === 1) {
+            if (game.state === 2) {
                 var draw, playerScore, opponentScore, ships;
 
                 draw = new Draw(opponent.area);
@@ -727,17 +755,18 @@ var main = function () {
                         default:
 
                     }
-                    game.state = 2;
+                    game.state = 3;
                 } else {
                     // Set opponent targets.
                     CreateRandomTargets(opponent, player);
                 }
             }
+            game.state = 1;
         });
 
         CreateRandomFleet(opponent, false);
 
-        $('body').on('keydown', function (event) {
+        $('body').on('keyup', function (event) {
             switch (event.which) {
                 case 67: // C - Clear fleet.
                     $('#fleetReset').click();
@@ -768,7 +797,7 @@ var main = function () {
     (function () {
 
         game = {
-            state: 1,
+            state: 0,
             size: 10,
             cellSize: 40,
             turn: 1
