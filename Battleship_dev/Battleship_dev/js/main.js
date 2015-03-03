@@ -467,10 +467,31 @@ var main = function () {
         }
     }
 
-    function CreateRandomTargets(player, opponent, show) {
-        var i, count, position;
+    function GetFreeCellCount(grid, playerCount) {
+        var x, y, cell, count;
 
-        count = (player.count - GetTargetCount(opponent.grid));
+        count = 0;
+
+        for (x in grid) {
+            for (y in grid[x]) {
+                cell = grid[x][y];
+
+                if (!cell.target && !cell.turn) {
+                    count += 1;
+                    if (count >= playerCount) {
+                        return playerCount
+                    }
+                }
+            }
+        }
+        
+        return count;
+    }
+
+    function CreateRandomTargets(player, opponent, show) {
+        var i, count, position, freeCells;
+
+        count = GetFreeCellCount(opponent.grid, (player.count - GetTargetCount(opponent.grid)));
 
         for (i = 0; i < count; i += 1) {
             position = GetRandomTargetPosition(opponent.grid);
@@ -805,6 +826,7 @@ var main = function () {
         // States: 0 positioning, 1 targeting, 2 firing, 3 over
 
     }());
+
     return {
         load: Load
     };
