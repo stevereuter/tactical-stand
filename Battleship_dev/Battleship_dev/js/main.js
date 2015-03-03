@@ -745,7 +745,7 @@ var main = function () {
                 // Update UI scores.
                 $('#oppHits').text(playerScore.hits);
                 $('#oppMisses').text(playerScore.misses);
-                $('#oppAc').text(Math.round(playerScore.hits / player.count * 100));
+                $('#oppAc').text(Math.round((playerScore.hits / GetTargetCount(opponent.grid)) * 100));
                 $('#oppTotal').text(opponent.score.hits);
                 $('#plrTotal').text(player.score.hits);
                 $('#plrStats').addClass('hidden');
