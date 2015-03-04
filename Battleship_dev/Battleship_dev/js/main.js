@@ -104,7 +104,7 @@ var main = function () {
 
             ctx.fillStyle = 'grey';
 
-            if (direction ==='h') {
+            if (direction === 'h') {
                 x += 5;
                 width -= 10;
 
@@ -326,8 +326,8 @@ var main = function () {
         game.state = 0;
         game.turn = 1;
 
-        $('#playerProgress').attr('style', 'width: ' +Math.round(opponent.score.hits / 34 * 100).toString() + '%;');
-        $('#opponentProgress').attr('style', 'width: ' +Math.round(player.score.hits / 34 * 100).toString() + '%;');
+        $('#playerProgress').attr('style', 'width: ' + Math.round(opponent.score.hits / 34 * 100).toString() + '%;');
+        $('#opponentProgress').attr('style', 'width: ' + Math.round(player.score.hits / 34 * 100).toString() + '%;');
     }
 
     function HasShip(data, size) {
@@ -484,7 +484,7 @@ var main = function () {
                 }
             }
         }
-        
+
         return count;
     }
 
@@ -596,15 +596,15 @@ var main = function () {
         opponent.area.click(function (event) {
             var x, y;
 
-            x = Math.floor(event.offsetX / game.cellSize);
-            y = Math.floor(event.offsetY / game.cellSize);
+            x = Math.floor((event.pageX - opponent.area.offset().left) / game.cellSize);
+            y = Math.floor((event.pageY -opponent.area.offset().top) / game.cellSize);
 
             if (x < 0) {
                 x = 0;
-            }
+        }
             if (y < 0) {
                 y = 0;
-            }
+        }
 
             if ((game.state === 1 || game.state === 2) && (!opponent.grid[x][y].turn || opponent.grid[x][y].turn === game.turn)) {
                 // Set targets.
@@ -614,8 +614,8 @@ var main = function () {
                     game.state = 1;
                 } else {
                     game.state = 2;
-                }
             }
+        }
 
 
             $('#oppTargets').text(player.count - GetTargetCount(opponent.grid));
@@ -627,20 +627,21 @@ var main = function () {
 
             draw = new Draw(player.area);
 
-            x = Math.floor(event.offsetX / game.cellSize);
-            y = Math.floor(event.offsetY / game.cellSize);
+            x = Math.floor((event.pageX - player.area.offset().left) / game.cellSize);
+            y = Math.floor((event.pageY - player.area.offset().top) / game.cellSize);
 
             if (x < 0) {
                 x = 0;
-            }
+        }
             if (y < 0) {
                 y = 0;
-            }
+        }
 
             if (game.state === 0 && player.count < 10 && !player.grid[x][y].ship) {
                 // Set fleet.
                 if (!startPos) {
-                    startPos = { x: x, y: y };
+                    startPos = { x: x, y: y
+                };
                     draw.select(x, y);
                 } else {
                     // Check direction and get size.
@@ -648,39 +649,44 @@ var main = function () {
                         case x === startPos.x:
                             if (y < startPos.y) {
                                 endPos = startPos;
-                                startPos = { x: x, y: y };
+                                startPos = { x: x, y: y
+                            };
                                 x = endPos.x;
                                 y = endPos.y;
                             } else {
-                                endPos = { x: x, y: y };
-                            }
-                            size = endPos.y - startPos.y + 1;
+                                endPos = { x: x, y: y
+                            };
+                        }
+                            size = endPos.y - startPos.y +1;
                             direction = 'h';
                             break;
                         case y === startPos.y:
                             if (x < startPos.x) {
                                 endPos = startPos;
-                                startPos = { x: x, y: y };
+                                startPos = { x: x, y: y
+                            };
                                 x = endPos.x;
                                 y = endPos.y;
                             } else {
-                                endPos = { x: x, y: y };
-                            }
-                            size = endPos.x - startPos.x + 1;
+                                endPos = { x: x, y: y
+                            };
+                        }
+                            size = endPos.x - startPos.x +1;
                             direction = 'v';
                             break;
                         default:
                             draw.cell(startPos.x, startPos.y);
-                            startPos = { x: x, y: y };
+                            startPos = { x: x, y: y
+                        };
                             endPos = undefined;
                             draw.select(startPos.x, startPos.y);
-                    }
+                }
                     if (size && HasShip(player, size)) {
 
                         if (AddShip(player, startPos.x, startPos.y, direction, size, true)) {
 
                             ResetFleet();
-                        }
+                    }
                         startPos = undefined;
                         endPos = undefined;
 
@@ -689,18 +695,18 @@ var main = function () {
                         draw.cell(endPos.x, endPos.y);
                         startPos = undefined;
                         endPos = undefined;
-                    }
-                }
-                if (player.count > 9) {
-                    $('#fleetDone').prop('disabled', false);
                 }
             }
+                if (player.count > 9) {
+                    $('#fleetDone').prop('disabled', false);
+            }
+        }
 
             id = player.grid[x][y].ship;
             if (id) {
                 hits = player.ships[id].hits;
                 shipSize = player.ships[id].size;
-            }
+        }
 
             $('#plrDamage').text(Math.round(hits / shipSize * 100));
             $('#plrID').text(id);
@@ -728,8 +734,8 @@ var main = function () {
 
                 if (game.state === 1) {
                     game.state = 2;
-                }
             }
+        }
         });
 
         $('#fire').click(function (event) {
@@ -753,7 +759,7 @@ var main = function () {
                 ships = UpdatePlayerShips(player);
                 UpdatePlayerShips(opponent);
 
-                $('#plrLost').text(10 - ships);
+                $('#plrLost').text(10 -ships);
                 $('#oppTargets').text(player.count);
                 $('#playerProgress').attr('style', 'width: ' + Math.round(opponent.score.hits / 34 * 100).toString() + '%;');
                 $('#opponentProgress').attr('style', 'width: ' + Math.round(player.score.hits / 34 * 100).toString() + '%;');
@@ -763,7 +769,7 @@ var main = function () {
                 if (player.count === 0 || opponent.count === 0) {
                     // Game over.
                     switch (0) {
-                        case player.count + opponent.count:
+                        case player.count +opponent.count:
                             // Tie.
                             draw.text(100, 190, 200, 'Game Over - Tie');
                             break;
@@ -775,13 +781,13 @@ var main = function () {
                             break;
                         default:
 
-                    }
+                }
                     game.state = 3;
                 } else {
                     // Set opponent targets.
                     CreateRandomTargets(opponent, player);
-                }
             }
+        }
             game.state = 1;
         });
 
@@ -809,27 +815,27 @@ var main = function () {
                     break;
                 default:
 
-            }
+        }
         });
 
-    }
+}
 
     // Constructor.
     (function () {
 
         game = {
-            state: 0,
-            size: 10,
-            cellSize: 40,
-            turn: 1
-        };
+                state: 0,
+                size: 10,
+                cellSize: 40,
+                turn: 1
+    };
         // States: 0 positioning, 1 targeting, 2 firing, 3 over
 
     }());
 
     return {
-        load: Load
-    };
+            load: Load
+};
 }();
 
 
