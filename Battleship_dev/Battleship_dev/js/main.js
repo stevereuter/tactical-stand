@@ -92,7 +92,7 @@ var main = function () {
 
     function DrawShip(ctx) {
         return function (row, column, direction, position, fill) {
-            var x, y, width, height, rotation;
+            var x, y, width, height;
 
             // Clear cell first.
             DrawCell(ctx)(row, column);
@@ -102,46 +102,46 @@ var main = function () {
             width = game.cellSize;
             height = game.cellSize;
 
+            ctx.save();
             ctx.fillStyle = 'grey';
             ctx.lineStyle = 'grey';
 
+            // Draw from center.
+            ctx.translate(x + (game.cellSize / 2), y + (game.cellSize / 2));
+
             if (direction === 'v') {
                 // Rotate.
-                ctx.save();
-               // ctx.translate(x, y);
-                rotation = -.5;
-                //if (position === 0) {
-                //    rotation *= -1;
-                //}
-                //ctx.rotate(rotation * Math.PI);
+                ctx.rotate(-.5 * Math.PI);
             }
 
             ctx.beginPath();
 
             switch (position) {
                 case 0:
-                    ctx.moveTo(x + 5, y + 40);
-                    ctx.quadraticCurveTo(x + 5, y + 15, x + 20, y + 5);
+                    // Front.
+                    ctx.moveTo(-15, 20);
+                    ctx.quadraticCurveTo(-15, -5, 0, -15);
                     ctx.stroke();
-                    ctx.quadraticCurveTo(x + 35, y + 15, x + 35, y + 40);
-
+                    ctx.quadraticCurveTo(15, -5, 15, 20);
                     ctx.stroke();
                     ctx.closePath();
                     break;
-                case 2:
-                    ctx.moveTo(x + 5, y + 0);
-                    ctx.bezierCurveTo(x + 5, y + 40, x + 35, y + 40, x + 35, y + 0);
+                case -1:
+                    // Rear.
+                    ctx.moveTo(-15, -20);
+                    ctx.bezierCurveTo(-15, 20, 15, 20, 15, -20);
                     ctx.stroke();
+                    ctx.closePath();
                     break
                 default:
-                    ctx.moveTo(x + 5, y + 0);
-                    ctx.lineTo(x + 5, y + 40);
-                    ctx.stroke();
+
+                    if (fill) {
+                        ctx.fillRect(-15, -20, 30, 40);
+                    } else {
+                        ctx.strokeRect(-15, -20, 30, 40);
+                    }
+
                     ctx.closePath();
-                    ctx.moveTo(x + 35, y + 0);
-                    ctx.lineTo(x + 35, y + 40);
-                    ctx.closePath();
-                    ctx.stroke();
             }
 
             if (fill) {
@@ -288,7 +288,7 @@ var main = function () {
             for (y = 0; y < columns; y += 1) {
                 // column
                 draw.cell(x, y);
-                data[x][y] = { ship: 0, hit: false, target: false, turn: 0 };
+                data[x][y] = { ship: { id: 0, direction: '', position: 0 }, hit: false, target: false, turn: 0 };
             }
         }
 
@@ -378,22 +378,22 @@ var main = function () {
                 }
 
                 draw.cell(x, y);
-                player.grid[x][y].ship = 0;
+                player.grid[x][y].ship = { id: 0, direction: direction, position: (i === 0 ? 0 : (i + 1 === size ? -1 : i)) };
 
             }
         }
 
         for (i = 0; i < size; i += 1) {
 
-            if (player.grid[x][y].ship) {
+            if (player.grid[x][y].ship.id) {
                 Undo(i - 1);
                 return;
             }
 
             if (show) {
-                draw.ship(x, y, direction, (i < 1 ? 0 : (i + 1 === size ? 2 : 1)));
+                draw.ship(x, y, direction, (i < 1 ? 0 : (i + 1 === size ? -1 : 1)), true);
             }
-            player.grid[x][y].ship = id;
+            player.grid[x][y].ship = { id: id, direction: direction, position: (i === 0 ? 0 : (i + 1 === size ? -1 : i)) };;
 
             if (direction === 'h') {
                 y += 1;
@@ -445,7 +445,7 @@ var main = function () {
         y = position.y;
 
         for (i = 0; i < size; i++) {
-            if (player.grid[x][y].ship) {
+            if (player.grid[x][y].ship.id) {
                 // Occupied.
                 return GetRandomPosition(player, size);
             }
@@ -529,9 +529,10 @@ var main = function () {
                 if (grid[x][y].target && grid[x][y].turn === game.turn) {
 
                     if (!hideMiss) {
+                        // Clear target.
                         draw.cell(x, y);
                     }
-                    if (grid[x][y].ship) {
+                    if (grid[x][y].ship.id) {
                         // Hit.
                         grid[x][y].hit = true;
 
@@ -560,7 +561,7 @@ var main = function () {
         for (x in player.grid) {
             for (y in player.grid[x]) {
                 if (player.grid[x][y].hit && player.grid[x][y].turn === game.turn) {
-                    shipID = player.grid[x][y].ship;
+                    shipID = player.grid[x][y].ship.id;
                     player.ships[shipID].hits += 1;
                 }
             }
@@ -575,6 +576,24 @@ var main = function () {
         }
         player.count = count;
         return count;
+    }
+
+    function ShowDestroyedShips(grid, player) {
+        var x, y, cell, ship, draw;
+
+        draw = new Draw(player.area);
+
+        for (x = 0; x < grid.length; x += 1) {
+            for (y = 0; y < grid[x].length; y += 1) {
+
+                cell = grid[x][y];
+                ship = player.ships[cell.ship.id];
+                if (ship && ship.hits === ship.size) {
+                    draw.ship(x, y, cell.ship.direction, cell.ship.position, true);
+                    draw.hit(x, y);
+                }
+            }
+        }
     }
 
     function Load() {
@@ -654,7 +673,7 @@ var main = function () {
                 y = 0;
             }
 
-            if (game.state === 0 && player.count < 10 && !player.grid[x][y].ship) {
+            if (game.state === 0 && player.count < 10 && !player.grid[x][y].ship.id) {
                 // Set fleet.
                 if (!startPos) {
                     startPos = {
@@ -725,7 +744,7 @@ var main = function () {
                 }
             }
 
-            id = player.grid[x][y].ship;
+            id = player.grid[x][y].ship.id;
             if (id) {
                 hits = player.ships[id].hits;
                 shipSize = player.ships[id].size;
@@ -769,6 +788,7 @@ var main = function () {
 
                 // Show player hits.
                 playerScore = ShowHits(opponent.grid, opponent);
+
                 // Show opponent hits.
                 opponentScore = ShowHits(player.grid, player, true);
                 // Update UI scores.
@@ -786,6 +806,8 @@ var main = function () {
                 $('#oppTargets').text(player.count);
                 $('#playerProgress').attr('style', 'width: ' + Math.round(opponent.score.hits / 34 * 100).toString() + '%;');
                 $('#opponentProgress').attr('style', 'width: ' + Math.round(player.score.hits / 34 * 100).toString() + '%;');
+
+                ShowDestroyedShips(opponent.grid, opponent);
 
                 game.turn += 1;
                 // Check for winner.
