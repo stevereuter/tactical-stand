@@ -91,8 +91,8 @@ var main = function () {
     }
 
     function DrawShip(ctx) {
-        return function (row, column, direction, position) {
-            var x, y, width, height;
+        return function (row, column, direction, position, fill) {
+            var x, y, width, height, rotation;
 
             // Clear cell first.
             DrawCell(ctx)(row, column);
@@ -103,35 +103,52 @@ var main = function () {
             height = game.cellSize;
 
             ctx.fillStyle = 'grey';
+            ctx.lineStyle = 'grey';
 
-            if (direction === 'h') {
-                x += 5;
-                width -= 10;
-
-                switch (position) {
-                    case 0: // Front.
-                        y += 5;
-                        break;
-                    case 2: // Rear.
-                        height -= 5;
-                        break;
-                }
-            } else {
-                y += 5;
-                height -= 10;
-
-                switch (position) {
-                    case 0: // Front.
-                        x += 5;
-                        break;
-                    case 2: // Rear.
-                        width -= 5;
-                        break;
-                }
+            if (direction === 'v') {
+                // Rotate.
+                ctx.save();
+               // ctx.translate(x, y);
+                rotation = -.5;
+                //if (position === 0) {
+                //    rotation *= -1;
+                //}
+                //ctx.rotate(rotation * Math.PI);
             }
 
             ctx.beginPath();
-            ctx.fillRect(x, y, width, height);
+
+            switch (position) {
+                case 0:
+                    ctx.moveTo(x + 5, y + 40);
+                    ctx.quadraticCurveTo(x + 5, y + 15, x + 20, y + 5);
+                    ctx.stroke();
+                    ctx.quadraticCurveTo(x + 35, y + 15, x + 35, y + 40);
+
+                    ctx.stroke();
+                    ctx.closePath();
+                    break;
+                case 2:
+                    ctx.moveTo(x + 5, y + 0);
+                    ctx.bezierCurveTo(x + 5, y + 40, x + 35, y + 40, x + 35, y + 0);
+                    ctx.stroke();
+                    break
+                default:
+                    ctx.moveTo(x + 5, y + 0);
+                    ctx.lineTo(x + 5, y + 40);
+                    ctx.stroke();
+                    ctx.closePath();
+                    ctx.moveTo(x + 35, y + 0);
+                    ctx.lineTo(x + 35, y + 40);
+                    ctx.closePath();
+                    ctx.stroke();
+            }
+
+            if (fill) {
+                ctx.fill();
+            }
+
+            ctx.restore();
         };
     }
 
@@ -597,14 +614,14 @@ var main = function () {
             var x, y;
 
             x = Math.floor((event.pageX - opponent.area.offset().left) / game.cellSize);
-            y = Math.floor((event.pageY -opponent.area.offset().top) / game.cellSize);
+            y = Math.floor((event.pageY - opponent.area.offset().top) / game.cellSize);
 
             if (x < 0) {
                 x = 0;
-        }
+            }
             if (y < 0) {
                 y = 0;
-        }
+            }
 
             if ((game.state === 1 || game.state === 2) && (!opponent.grid[x][y].turn || opponent.grid[x][y].turn === game.turn)) {
                 // Set targets.
@@ -614,8 +631,8 @@ var main = function () {
                     game.state = 1;
                 } else {
                     game.state = 2;
+                }
             }
-        }
 
 
             $('#oppTargets').text(player.count - GetTargetCount(opponent.grid));
@@ -632,16 +649,17 @@ var main = function () {
 
             if (x < 0) {
                 x = 0;
-        }
+            }
             if (y < 0) {
                 y = 0;
-        }
+            }
 
             if (game.state === 0 && player.count < 10 && !player.grid[x][y].ship) {
                 // Set fleet.
                 if (!startPos) {
-                    startPos = { x: x, y: y
-                };
+                    startPos = {
+                        x: x, y: y
+                    };
                     draw.select(x, y);
                 } else {
                     // Check direction and get size.
@@ -649,44 +667,49 @@ var main = function () {
                         case x === startPos.x:
                             if (y < startPos.y) {
                                 endPos = startPos;
-                                startPos = { x: x, y: y
-                            };
+                                startPos = {
+                                    x: x, y: y
+                                };
                                 x = endPos.x;
                                 y = endPos.y;
                             } else {
-                                endPos = { x: x, y: y
-                            };
-                        }
-                            size = endPos.y - startPos.y +1;
+                                endPos = {
+                                    x: x, y: y
+                                };
+                            }
+                            size = endPos.y - startPos.y + 1;
                             direction = 'h';
                             break;
                         case y === startPos.y:
                             if (x < startPos.x) {
                                 endPos = startPos;
-                                startPos = { x: x, y: y
-                            };
+                                startPos = {
+                                    x: x, y: y
+                                };
                                 x = endPos.x;
                                 y = endPos.y;
                             } else {
-                                endPos = { x: x, y: y
-                            };
-                        }
-                            size = endPos.x - startPos.x +1;
+                                endPos = {
+                                    x: x, y: y
+                                };
+                            }
+                            size = endPos.x - startPos.x + 1;
                             direction = 'v';
                             break;
                         default:
                             draw.cell(startPos.x, startPos.y);
-                            startPos = { x: x, y: y
-                        };
+                            startPos = {
+                                x: x, y: y
+                            };
                             endPos = undefined;
                             draw.select(startPos.x, startPos.y);
-                }
+                    }
                     if (size && HasShip(player, size)) {
 
                         if (AddShip(player, startPos.x, startPos.y, direction, size, true)) {
 
                             ResetFleet();
-                    }
+                        }
                         startPos = undefined;
                         endPos = undefined;
 
@@ -695,18 +718,18 @@ var main = function () {
                         draw.cell(endPos.x, endPos.y);
                         startPos = undefined;
                         endPos = undefined;
+                    }
                 }
-            }
                 if (player.count > 9) {
                     $('#fleetDone').prop('disabled', false);
+                }
             }
-        }
 
             id = player.grid[x][y].ship;
             if (id) {
                 hits = player.ships[id].hits;
                 shipSize = player.ships[id].size;
-        }
+            }
 
             $('#plrDamage').text(Math.round(hits / shipSize * 100));
             $('#plrID').text(id);
@@ -734,8 +757,8 @@ var main = function () {
 
                 if (game.state === 1) {
                     game.state = 2;
+                }
             }
-        }
         });
 
         $('#fire').click(function (event) {
@@ -759,7 +782,7 @@ var main = function () {
                 ships = UpdatePlayerShips(player);
                 UpdatePlayerShips(opponent);
 
-                $('#plrLost').text(10 -ships);
+                $('#plrLost').text(10 - ships);
                 $('#oppTargets').text(player.count);
                 $('#playerProgress').attr('style', 'width: ' + Math.round(opponent.score.hits / 34 * 100).toString() + '%;');
                 $('#opponentProgress').attr('style', 'width: ' + Math.round(player.score.hits / 34 * 100).toString() + '%;');
@@ -769,7 +792,7 @@ var main = function () {
                 if (player.count === 0 || opponent.count === 0) {
                     // Game over.
                     switch (0) {
-                        case player.count +opponent.count:
+                        case player.count + opponent.count:
                             // Tie.
                             draw.text(100, 190, 200, 'Game Over - Tie');
                             break;
@@ -781,13 +804,13 @@ var main = function () {
                             break;
                         default:
 
-                }
+                    }
                     game.state = 3;
                 } else {
                     // Set opponent targets.
                     CreateRandomTargets(opponent, player);
+                }
             }
-        }
             game.state = 1;
         });
 
@@ -815,27 +838,27 @@ var main = function () {
                     break;
                 default:
 
-        }
+            }
         });
 
-}
+    }
 
     // Constructor.
     (function () {
 
         game = {
-                state: 0,
-                size: 10,
-                cellSize: 40,
-                turn: 1
-    };
+            state: 0,
+            size: 10,
+            cellSize: 40,
+            turn: 1
+        };
         // States: 0 positioning, 1 targeting, 2 firing, 3 over
 
     }());
 
     return {
-            load: Load
-};
+        load: Load
+    };
 }();
 
 
