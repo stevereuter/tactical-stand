@@ -680,7 +680,7 @@ var main = function () {
 
             if ((game.state === 1 || game.state === 2) && (!opponent.grid[x][y].turn || opponent.grid[x][y].turn === game.turn)) {
                 // Set targets.
-                SetTarget(opponent, x, y, true, player.count);
+                SetTarget(opponent, x, y, true, player.count, true);
 
                 if (!GetTargetCount(opponent.grid) && game.state !== 1) {
                     game.state = 1;
@@ -803,6 +803,19 @@ var main = function () {
             CreateRandomTargets(opponent, player);
         });
 
+        $('#difficulty button').click(function (event) {
+            var level, clicked;
+
+            clicked = $(this);
+            level = parseInt(clicked.attr('data-level'), 10);
+
+            if (game.state < 1) {
+                $('#difficulty button.active').removeClass('active');
+                clicked.addClass('active');
+                game.level = level;
+            }
+        });
+
         $('#targetRandom').click(function (event) {
             event.preventDefault();
 
@@ -865,7 +878,10 @@ var main = function () {
                     }
                     game.state = 3;
                 } else {
-                    CreateCloseTargets(player.grid, player, opponent);
+                    if (game.level > 0) {
+                        // Target around hits.
+                        CreateCloseTargets(player.grid, player, opponent);
+                    }
                     // Set opponent targets.
                     CreateRandomTargets(opponent, player);
                 }
@@ -909,7 +925,8 @@ var main = function () {
             state: 0,
             size: 10,
             cellSize: 40,
-            turn: 1
+            turn: 1,
+            level: 0
         };
         // States: 0 positioning, 1 targeting, 2 firing, 3 over
 
