@@ -219,7 +219,7 @@ var main = function () {
         return count;
     }
 
-    function SetTarget(opponent, row, column, show, count) {
+    function SetTarget(opponent, row, column, show, count, setOnly) {
         var draw;
 
         draw = new Draw(opponent.area);
@@ -230,11 +230,16 @@ var main = function () {
             }
             opponent.grid[row][column].target = true;
             opponent.grid[row][column].turn = game.turn;
+            count -= 1;
         } else {
-            draw.cell(row, column);
-            opponent.grid[row][column].target = false;
-            opponent.grid[row][column].turn = 0;
+            if (setOnly) {
+                draw.cell(row, column);
+                opponent.grid[row][column].target = false;
+                opponent.grid[row][column].turn = 0;
+            }
         }
+
+        return count;
     }
 
     function GetData(type) {
@@ -596,6 +601,37 @@ var main = function () {
         }
     }
 
+    function CreateCloseTargets(grid, oppenent, player) {
+        var x, y, cell, ship, count;
+
+        count = GetFreeCellCount(opponent.grid, (player.count - GetTargetCount(opponent.grid)));
+
+        for (x = 0; x < grid.length; x += 1) {
+            for (y = 0; y < grid[x].length; y += 1) {
+                cell = grid[x][y];
+                ship = oppenent.ships[cell.ship.id];
+                if (cell.hit && ship.hits < ship.size) {
+                    if (x > 0) {
+                        // Target before.
+                        count = SetTarget(oppenent, x - 1, y, false, count);
+                    }
+                    if (y > 0) {
+                        // Target above.
+                        count = SetTarget(oppenent, x, y - 1, false, count);
+                    }
+                    if (x < 9) {
+                        // Target after.
+                        count = SetTarget(oppenent, x + 1, y, false, count);
+                    }
+                    if (y < 9) {
+                        // Target below.
+                        count = SetTarget(oppenent, x, y + 1, false, count);
+                    }
+                }
+            }
+        }
+    }
+
     function Load() {
 
         NewGame();
@@ -829,6 +865,7 @@ var main = function () {
                     }
                     game.state = 3;
                 } else {
+                    CreateCloseTargets(player.grid, player, opponent);
                     // Set opponent targets.
                     CreateRandomTargets(opponent, player);
                 }
