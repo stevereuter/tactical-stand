@@ -12,20 +12,23 @@
         <h1><span class="fa fa-ship"></span> Battleship <small>by Steve Reuter</small></h1>
     </header>
 
-    <div class="container">
+    <div class="container-fluid">
         <div class="row">
             <div id="tagetPanel" class="col-md-6 hidden">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h3 class="panel-title"><span class="fa fa-rocket"></span> Opponent Area</h3>
+                        <h3 class="panel-title">
+                            <span class="fa fa-rocket"></span> Opponent Area
+                            <button type="button" class="btn btn-sm btn-primary" data-placement="bottom" data-toggle="popover" title="Opponent Grid" data-content="Click squares on the grid to place targets. The amount of targets remaining is displayed above the grid. You can remove a target by clicking it. If you do not want to manually set targets, click the Auto Target button. Click Fire when you are ready to attack."><span class="fa fa-question"></span> Help</button>
+                        </h3>
                     </div>
                     <div class="panel-body ">
-                        <span class="label label-info">Targets: <span id="oppTargets">10</span></span>
+                        <span class="label label-info">Targets: <span id="oppTargets">IN_CODE</span></span>
                         <span class="label label-success">Hits: <span id="oppHits">0</span></span>
                         <span class="label label-danger">Misses: <span id="oppMisses">0</span></span>
                         <span class="label label-info">Accuracy: <span id="oppAc">0</span>%</span>
                         <span class="label label-success">Total Hits: <span id="oppTotal">0</span></span>
-                        <div class="text-center">
+                        <div>
                             <canvas id="opponentArea" width="400" height="400"></canvas>
                         </div>
                         <div class="progress">
@@ -36,10 +39,10 @@
                     <div class="panel-footer">
                         <button id="fire" class="btn btn-success"><span class="fa fa-rocket"></span> <u>F</u>ire</button>
                         <button id="targetRandom" class="btn btn-warning"><span class="fa fa-crosshairs"></span> Auto <u>T</u>arget</button>
-                        <button id="startOver" class="btn btn-danger"><span class="fa fa-times"></span> <u>S</u>tart Over</button>
+                        <button class="btn btn-danger game-restart"><span class="fa fa-times"></span> <u>S</u>tart Over</button>
                     </div>
                 </div>
-            </div>
+            </div><!-- Opponent Area -->
             <div id="fleetPanel" class="col-md-6 hidden">
                 <div class="panel panel-default">
                     <div class="panel-heading">
@@ -63,11 +66,14 @@
 
                     </div>
                 </div>
-            </div>
+            </div><!-- Fleet Info -->
             <div class="col-md-6">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h3 class="panel-title"><span class="fa fa-shield"></span> Player Area</h3>
+                        <h3 class="panel-title">
+                            <span class="fa fa-shield"></span> Player Area
+                            <button type="button" class="btn btn-sm btn-primary" data-placement="bottom" data-toggle="popover" title="My Fleet" data-content="To place a ship, click a square on the grid to set the front of a ship. Then click another square to set the rear of the ship. The ship will only be placed if you have one available. If you do not want to place your ships manually, click the Auto Place button. Click Ready when all ships have been placed."><span class="fa fa-question"></span> Help</button>
+                        </h3>
                     </div>
                     <div class="panel-body">
                         <span class="label label-warning">Total Hits:: <span id="plrTotal">0</span></span>
@@ -76,7 +82,7 @@
                             <span class="label label-info">Ship ID: <span id="plrID">0</span></span>
                             <span class="label label-danger">Damage: <span id="plrDamage">0</span>%</span>
                         </span>
-                        <div class="text-center">
+                        <div>
                             <canvas id="playerArea" width="400" height="400"></canvas>
                         </div>
                         <div class="progress">
@@ -96,10 +102,79 @@
                         </span>
                     </div>
                 </div>
-            </div>
+            </div><!-- Player Area -->
         </div>
     </div>
+    <div id="stats" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">Game Statistics</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="texy-center">
+                        <p>Winner: <span id="game-winner"></span></p>
+                        <p>Turns: <span id="game-turns"></span></p>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Player</th>
+                                    <th>Computer</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th>Shots Fired</th>
+                                    <td id="game-plr-fired"></td>
+                                    <td id="game-opp-fired"></td>
+                                </tr>
+                                <tr>
+                                    <th>Hits</th>
+                                    <td id="game-plr-hits"></td>
+                                    <td id="game-opp-hits"></td>
+                                <tr>
+                                    <th>Misses</th>
+                                    <td id="game-opp-misses"></td>
+                                    <td id="game-plr-misses"></td>
 
+                                <tr>
+                                    <th>Accuracy</th>
+                                    <td id="game-plr-accuracy"></td>
+                                    <td id="game-opp-accuracy"></td>
+                                <tr>
+                                    <th>Enemies Destroyed</th>
+                                    <td id="game-plr-destroyed"></td>
+                                    <td id="game-opp-destroyed"></td>
+                                </tr>
+                                <!--<tr>
+                                    <th>Ships Destroyed in 1 Turn</th>
+                                    <td id="game-plr-onehit"></td>
+                                    <td id="game-opp-onehit"></td>
+                                </tr>-->
+                                <tr>
+                                    <th>Enemies Remaining</th>
+                                    <td id="game-plr-remaining"></td>
+                                    <td id="game-opp-remaining"></td>
+                                </tr>
+
+                                <tr>
+                                    <th>Enemies Not Hit</th>
+                                    <td id="game-plr-undamaged"></td>
+                                    <td id="game-opp-undamaged"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary game-restart" data-dismiss="modal">New Game</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
     <script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
     <script src="js/main.js"></script>

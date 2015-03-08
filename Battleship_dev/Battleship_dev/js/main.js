@@ -313,7 +313,14 @@ var main = function () {
                 3: 4,
                 2: 2
             },
-            score: { hits: 0, misses: 0 }
+            score: { hits: 0, misses: 0 },
+            RemainingTargets: function (level) {
+                if (level > 1) {
+                    return Math.round(this.count * .51);
+                } else {
+                    return this.count;
+                }
+            }
         };
     }
 
@@ -513,7 +520,7 @@ var main = function () {
     function CreateRandomTargets(player, opponent, show) {
         var i, count, position, freeCells;
 
-        count = GetFreeCellCount(opponent.grid, (player.count - GetTargetCount(opponent.grid)));
+        count = GetFreeCellCount(opponent.grid, (player.RemainingTargets(game.level) - GetTargetCount(opponent.grid)));
 
         for (i = 0; i < count; i += 1) {
             position = GetRandomTargetPosition(opponent.grid);
@@ -632,13 +639,120 @@ var main = function () {
         }
     }
 
+    function RestartGameClickEvent() {
+        NewGame();
+    }
+
+    function GetStats() {
+        var x, y, plr, opp, plrHits, oppHits, plrShots, oppShots;
+        var s, pShip, oShip, plrLost, oppLost, plrRem, oppRem, plrNotHit, oppNotHit;
+
+        plrShots = 0;
+        oppShots = 0;
+        plrHits = 0;
+        oppHits = 0;
+        plrLost = 0;
+        oppLost = 0;
+        plrRem = 0;
+        oppRem = 0;
+        plrNotHit = 0;
+        oppNotHit = 0;
+
+        for (x = 0; x < opponent.grid.length; x += 1) {
+            for (y = 0; y < opponent.grid.length; y += 1) {
+                plr = player.grid[x][y];
+                opp = opponent.grid[x][y];
+
+                if (plr.target) {
+                    plrShots += 1;
+                    if (plr.hit) {
+                        plrHits += 1;
+                    }
+                }
+                if (opp.target) {
+                    oppShots += 1;
+                    if (opp.hit) {
+                        oppHits += 1;
+                    }
+                }
+            }
+        }
+
+        // Loop through ships.
+        for (s = 1; s < opponent.ships.length; s += 1) {
+            pShip = player.ships[s];
+
+            if (pShip.hits === pShip.size) {
+                plrLost += 1;
+            } else {
+                plrRem += 1;
+            }
+            if (pShip.hits === 0) {
+                plrNotHit += 1;
+            }
+
+            oShip = opponent.ships[s];
+
+            if (oShip.hits === oShip.size) {
+                oppLost += 1;
+            } else {
+                oppRem += 1;
+            }
+            if (oShip.hits === 0) {
+                oppNotHit += 1;
+            }
+        }
+
+        return {
+            player: {
+                hits: plrHits,
+                shots: plrShots,
+                lost: plrLost,
+                remaining: plrRem,
+                notHit: plrNotHit
+            },
+            opponent: {
+                hits: oppHits,
+                shots: oppShots,
+                lost: oppLost,
+                remaining: oppRem,
+                notHit: oppNotHit
+            }
+        }
+    }
+
+    function ShowStats(winner) {
+        var stats;
+
+        stats = GetStats();
+
+        $('#game-winner').text(winner);
+        $('#game-turns').text(game.turn - 1);
+        $('#game-plr-fired').text(stats.opponent.shots);
+        $('#game-opp-fired').text(stats.player.shots);
+        $('#game-plr-hits').text(stats.opponent.hits);
+        $('#game-opp-hits').text(stats.player.hits);
+        $('#game-plr-misses').text(stats.opponent.shots - stats.opponent.hits);
+        $('#game-opp-misses').text(stats.player.shots - stats.player.hits);
+        $('#game-plr-accuracy').text(Math.round((stats.opponent.hits / stats.opponent.shots) * 100) + '%');
+        $('#game-opp-accuracy').text(Math.round((stats.player.hits / stats.player.shots) * 100) + '%');
+        $('#game-plr-destroyed').text(stats.opponent.lost);
+        $('#game-opp-destroyed').text(stats.player.lost);
+        $('#game-plr-remaining').text(stats.opponent.remaining);
+        $('#game-opp-remaining').text(stats.player.remaining);
+        $('#game-plr-undamaged').text(stats.opponent.notHit);
+        $('#game-opp-undamaged').text(stats.player.notHit);
+
+        $('#stats').modal();
+    }
+
     function Load() {
 
         NewGame();
         // Click events.
 
-        $('#startOver').click(function (event) {
-            NewGame();
+        $('.game-restart').click(function (event) {
+            RestartGameClickEvent();
         });
 
         $('#fleetReset').click(function (event) {
@@ -680,7 +794,7 @@ var main = function () {
 
             if ((game.state === 1 || game.state === 2) && (!opponent.grid[x][y].turn || opponent.grid[x][y].turn === game.turn)) {
                 // Set targets.
-                SetTarget(opponent, x, y, true, player.count, true);
+                SetTarget(opponent, x, y, true, player.RemainingTargets(game.level), true);
 
                 if (!GetTargetCount(opponent.grid) && game.state !== 1) {
                     game.state = 1;
@@ -690,7 +804,7 @@ var main = function () {
             }
 
 
-            $('#oppTargets').text(player.count - GetTargetCount(opponent.grid));
+            $('#oppTargets').text(player.RemainingTargets(game.level) - GetTargetCount(opponent.grid));
 
         });
 
@@ -784,17 +898,20 @@ var main = function () {
             if (id) {
                 hits = player.ships[id].hits;
                 shipSize = player.ships[id].size;
+                $('#plrDamage').text(Math.round(hits / shipSize * 100));
+                $('#plrID').text(id);
+                $('#plrStats').removeClass('hidden');
+            } else {
+                $('#plrStats').addClass('hidden');
             }
 
-            $('#plrDamage').text(Math.round(hits / shipSize * 100));
-            $('#plrID').text(id);
 
-            $('#plrStats').removeClass('hidden');
         });
 
         $('#fleetDone').click(function (event) {
             event.preventDefault();
 
+            $('#oppTargets').text(player.RemainingTargets(game.level));
             $('#fleetDone').prop('disabled', true);
             $('#fleetPanel').addClass('hidden');
             $('#tagetPanel').removeClass('hidden');
@@ -821,7 +938,7 @@ var main = function () {
 
             if (game.state === 1 || game.state === 2) {
                 CreateRandomTargets(player, opponent, true);
-                $('#oppTargets').text(player.count - GetTargetCount(opponent.grid));
+                $('#oppTargets').text(player.RemainingTargets(game.level) - GetTargetCount(opponent.grid));
 
                 if (game.state === 1) {
                     game.state = 2;
@@ -852,7 +969,7 @@ var main = function () {
                 UpdatePlayerShips(opponent);
 
                 $('#plrLost').text(10 - ships);
-                $('#oppTargets').text(player.count);
+                $('#oppTargets').text(player.RemainingTargets(game.level));
                 $('#playerProgress').attr('style', 'width: ' + Math.round(opponent.score.hits / 34 * 100).toString() + '%;');
                 $('#opponentProgress').attr('style', 'width: ' + Math.round(player.score.hits / 34 * 100).toString() + '%;');
 
@@ -866,19 +983,22 @@ var main = function () {
                         case player.count + opponent.count:
                             // Tie.
                             draw.text(100, 190, 200, 'Game Over - Tie');
+                            ShowStats('Tie');
                             break;
                         case player.count:
                             draw.text(100, 190, 200, 'Game Over - Computer Wins');
+                            ShowStats('Computer');
                             break;
                         case opponent.count:
                             draw.text(100, 190, 200, 'Game Over - You Win');
+                            ShowStats('You');
                             break;
                         default:
 
                     }
                     game.state = 3;
                 } else {
-                    if (game.level > 0) {
+                    if (game.turn > 1 && game.level > 0) {
                         // Target around hits.
                         CreateCloseTargets(player.grid, player, opponent);
                     }
@@ -888,8 +1008,6 @@ var main = function () {
             }
             game.state = 1;
         });
-
-        CreateRandomFleet(opponent, false);
 
         $('body').on('keyup', function (event) {
             switch (event.which) {
@@ -903,7 +1021,7 @@ var main = function () {
                     $('#fleetDone').click();
                     break;
                 case 83: // S - Start over.
-                    $('#startOver').click();
+                    RestartGameClickEvent();
                     break;
                 case 84: // T - Auto target.
                     $('#targetRandom').click();
@@ -916,6 +1034,9 @@ var main = function () {
             }
         });
 
+        CreateRandomFleet(opponent, false);
+
+        $('[data-toggle="popover"]').popover();
     }
 
     // Constructor.
