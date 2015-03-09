@@ -5,6 +5,7 @@ var main = function () {
 
     // Methods
 
+    //#region Draw Methods. 
     function DrawCircle(ctx, color, size) {
         return function (row, column) {
             var x, y, width, height;
@@ -203,6 +204,8 @@ var main = function () {
             ship: DrawShip(ctx)
         };
     }
+
+    //#endregion
 
     function GetTargetCount(data) {
         var count, r, c;
@@ -505,7 +508,7 @@ var main = function () {
             for (y in grid[x]) {
                 cell = grid[x][y];
 
-                if (!cell.target && !cell.turn) {
+                if (!cell.target) {
                     count += 1;
                     if (count >= playerCount) {
                         return playerCount
@@ -520,7 +523,11 @@ var main = function () {
     function CreateRandomTargets(player, opponent, show) {
         var i, count, position, freeCells;
 
-        count = GetFreeCellCount(opponent.grid, (player.RemainingTargets(game.level) - GetTargetCount(opponent.grid)));
+        if (player.name === 'opponent' && game.level > 2) {
+            count = GetFreeCellCount(opponent.grid, 10 - GetTargetCount(opponent.grid));
+        } else {
+            count = GetFreeCellCount(opponent.grid, (player.RemainingTargets(game.level) - GetTargetCount(opponent.grid)));
+        }
 
         for (i = 0; i < count; i += 1) {
             position = GetRandomTargetPosition(opponent.grid);
@@ -611,7 +618,11 @@ var main = function () {
     function CreateCloseTargets(grid, oppenent, player) {
         var x, y, cell, ship, count;
 
-        count = GetFreeCellCount(opponent.grid, (player.count - GetTargetCount(opponent.grid)));
+        if (player.name === 'opponent' && game.level > 2) {
+            count = GetFreeCellCount(opponent.grid, 10);
+        } else {
+            count = GetFreeCellCount(opponent.grid, (player.count - GetTargetCount(opponent.grid)));
+        }
 
         for (x = 0; x < grid.length; x += 1) {
             for (y = 0; y < grid[x].length; y += 1) {
