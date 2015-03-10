@@ -227,7 +227,7 @@ var main = function () {
 
         draw = new Draw(opponent.area);
 
-        if (!opponent.grid[row][column].target && (GetTargetCount(opponent.grid) < count)) {
+        if (!opponent.grid[row][column].target) {
             if (show) {
                 draw.target(row, column);
             }
@@ -535,7 +535,7 @@ var main = function () {
         }
     }
 
-    function ShowHits(grid, player, hideMiss) {
+    function ShowHits(grid, player, clear) {
         var x, y, draw, hits, misses;
 
         draw = new Draw(player.area);
@@ -547,7 +547,7 @@ var main = function () {
             for (y in grid[x]) {
                 if (grid[x][y].target && grid[x][y].turn === game.turn) {
 
-                    if (!hideMiss) {
+                    if (clear) {
                         // Clear target.
                         draw.cell(x, y);
                     }
@@ -560,9 +560,7 @@ var main = function () {
                         hits += 1;
                     } else {
                         // Miss.
-                        if (!hideMiss) {
-                            draw.miss(x, y);
-                        }
+                        draw.miss(x, y);
                         player.score.misses += 1;
                         misses += 1;
                     }
@@ -621,7 +619,7 @@ var main = function () {
         if (player.name === 'opponent' && game.level > 2) {
             count = GetFreeCellCount(opponent.grid, 10);
         } else {
-            count = GetFreeCellCount(opponent.grid, (player.count - GetTargetCount(opponent.grid)));
+            count = GetFreeCellCount(opponent.grid, player.count);
         }
 
         for (x = 0; x < grid.length; x += 1) {
@@ -633,15 +631,15 @@ var main = function () {
                         // Target before.
                         count = SetTarget(oppenent, x - 1, y, false, count);
                     }
-                    if (y > 0) {
+                    if (y > 0 && count) {
                         // Target above.
                         count = SetTarget(oppenent, x, y - 1, false, count);
                     }
-                    if (x < 9) {
+                    if (x < 9 && count) {
                         // Target after.
                         count = SetTarget(oppenent, x + 1, y, false, count);
                     }
-                    if (y < 9) {
+                    if (y < 9 && count) {
                         // Target below.
                         count = SetTarget(oppenent, x, y + 1, false, count);
                     }
@@ -791,7 +789,7 @@ var main = function () {
         });
 
         opponent.area.click(function (event) {
-            var x, y;
+            var x, y, count;
 
             x = Math.floor((event.pageX - opponent.area.offset().left) / game.cellSize);
             y = Math.floor((event.pageY - opponent.area.offset().top) / game.cellSize);
@@ -803,9 +801,13 @@ var main = function () {
                 y = 0;
             }
 
+            count = player.RemainingTargets(game.level) - GetTargetCount(opponent.grid);
+
             if ((game.state === 1 || game.state === 2) && (!opponent.grid[x][y].turn || opponent.grid[x][y].turn === game.turn)) {
                 // Set targets.
-                SetTarget(opponent, x, y, true, player.RemainingTargets(game.level), true);
+                if (opponent.grid[x][y].target || (!opponent.grid[x][y].target && count)) {
+                    SetTarget(opponent, x, y, true, count, true);
+                }
 
                 if (!GetTargetCount(opponent.grid) && game.state !== 1) {
                     game.state = 1;
@@ -964,10 +966,10 @@ var main = function () {
                 draw = new Draw(opponent.area);
 
                 // Show player hits.
-                playerScore = ShowHits(opponent.grid, opponent);
+                playerScore = ShowHits(opponent.grid, opponent, true);
 
                 // Show opponent hits.
-                opponentScore = ShowHits(player.grid, player, true);
+                opponentScore = ShowHits(player.grid, player);
                 // Update UI scores.
                 $('#oppHits').text(playerScore.hits);
                 $('#oppMisses').text(playerScore.misses);
