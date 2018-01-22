@@ -31,15 +31,21 @@ var battleship = function () {
             if (clear) {
 
                 ctx.beginPath();
-                ctx.clearRect(x, y - size, width, size * 1.2);
+                ctx.clearRect(x, y - size, width, size * 1.3);
                 ctx.closePath();
             }
 
             ctx.beginPath();
             ctx.fillStyle = (color ? color : 'white');
-            ctx.font = size + 'px Arial';
+            ctx.font = size + 'px "8-bit"';
             ctx.fillText(text, x, y, width);
             ctx.closePath();
+        };
+    }
+
+    function DrawMessage(ctx) {
+        return function (text, color) {
+            DrawText(ctx)(0, game.cellSize * 1.7, game.size * game.cellSize, text, (game.cellSize / 2), true, color);
         };
     }
 
@@ -62,24 +68,24 @@ var battleship = function () {
     function DrawCircle(ctx) {
         return function (x, y, size, text, color, offset, radius) {
             if (!radius) {
-                radius = 55;
+                radius = 27.5;
             }
             ctx.save();
             ctx.beginPath();
-            gradient = ctx.createRadialGradient(x + (size / 2) - 10, y + (size / 2) - 10, 0, x + (size / 2) - 10, y + (size / 2) - 10, radius + 15);
+            gradient = ctx.createRadialGradient(x + (size / 2) - 10, y + (size / 2) - 5, 0, x + (size / 2) - 5, y + (size / 2) - 5, radius + 7.5);
             gradient.addColorStop(0, 'white');
             gradient.addColorStop(1, color);
             ctx.beginPath();
             ctx.fillStyle = gradient;
             ctx.strokeStyle = '#ddd';
-            ctx.lineWidth = (radius > 40 ? radius * .18 : 7);
+            ctx.lineWidth = (radius > 20 ? radius * .18 : 4);
             ctx.arc(x + (size / 2), y + (size / 2), radius, 0, 2 * Math.PI);
             ctx.stroke();
             ctx.fill();
             ctx.closePath();
             if (text) {
 
-                DrawText(ctx)(x + offset, y + 70, size, text, 30, false, 'black');
+                DrawText(ctx)(x + offset, y + 35, size, text, 15, false, 'black');
             }
             ctx.restore();
         };
@@ -90,10 +96,10 @@ var battleship = function () {
             var x, y, size, level, offset, gradient, color, text;
 
             x = 0;
-            y = 720;
+            y = 360;
             size = game.cellSize * 2;
 
-            for (x = 0; x < 600; x += size) {
+            for (x = 0; x < game.width; x += size) {
 
 
                 text = '';
@@ -102,38 +108,38 @@ var battleship = function () {
                     case 0:
                         color = 'Green';
                         text = (name === 'opponent' ? 'Fire' : 'Ready');
-                        offset = (name === 'opponent' ? 30 : 15);
+                        offset = (name === 'opponent' ? (game.cellSize / 2) : 7.5);
                         break;
-                    case 120:
+                    case 60:
                         color = 'Orange';
                         text = (name === 'player' && game.state > 0 ? '' : 'Auto');
-                        offset = 25;
+                        offset = 12.5;
                         break;
-                    case 240:
+                    case 120:
                         color = 'Red';
                         text = (game.state === 0 && name === 'player' ? 'Clear' : 'Quit');
-                        offset = (game.state === 0 && name === 'player' ? 20 : 30);
+                        offset = (game.state === 0 && name === 'player' ? 10 : (game.cellSize / 2));
                         break;
-                    case 360:
+                    case 180:
                         if (name === 'player') {
 
                             color = 'DarkSlateGray';
                             text = levels[game.level];
                             switch (game.level) {
                                 case 0:
-                                    offset = 25;
+                                    offset = 12.5;
                                     break;
                                 case 1:
-                                    offset = 10;
-                                    break;
-                                case 2:
-                                    offset = 25;
-                                    break;
-                                case 3:
                                     offset = 5;
                                     break;
+                                case 2:
+                                    offset = 12.5;
+                                    break;
+                                case 3:
+                                    offset = 2.5;
+                                    break;
                                 default:
-                                    offset = 30;
+                                    offset = (game.cellSize / 2);
                             }
                         }
 
@@ -142,7 +148,7 @@ var battleship = function () {
 
                         color = '#003300';
                         text = 'Switch';
-                        offset = 15;
+                        offset = 7.5;
                         break;
                 }
 
@@ -155,6 +161,14 @@ var battleship = function () {
             }
 
         };
+    }
+
+    function drawStartButton() {
+
+        var ctx = $('#startArea')[0].getContext('2d');
+       
+        DrawCircle(ctx)(125, 100, 50, undefined, 'green', 0, 50);
+        DrawText(ctx)(105, 140, 90, 'BEGIN', 45, false, '#272b30');
     }
 
     function drawPlayerStatus(ctx) {
@@ -170,28 +184,44 @@ var battleship = function () {
             // Draw status bars.
             ctx.save();
             ctx.beginPath();
-            ctx.clearRect(0, 0, 300, 60);
+            ctx.clearRect(0, 0, (game.width / 2), game.cellSize);
             ctx.fillStyle = 'Green';
-            ctx.fillRect(0, 5, -30 * opponent.count + 300, 20);
+            ctx.fillRect(0, 2.5, -(game.cellSize / 2) * opponent.count + (game.width / 2), 10);
             ctx.fillStyle = 'Red';
-            ctx.fillRect(0, 35, -30 * player.count + 300, 20);
+            ctx.fillRect(0, 17.5, -(game.cellSize / 2) * player.count + (game.width / 2), 10);
             ctx.closePath();
             ctx.restore();
 
             // Draw ship counts.
+            // clear
+            ctx.clearRect((game.width / 2), 0, game.width, game.cellSize);
             for (x = 5; x < 10; x += 1) {
 
-                ctx.beginPath();
-                DrawShip(ctx)(x, 0, 'v', (x === 5 ? 0 : -1), true, true);
-                ctx.closePath();
+                // draw ship part
+                DrawShip(ctx)(x, 0, 'v', (x === 5 ? 0 : -1), false, true);
+                if (x > 5 && x < 9) {
+                    // draw top line
+                    ctx.beginPath();
+                    ctx.moveTo(x * game.cellSize, game.cellSize * .125);
+                    ctx.lineTo(x * game.cellSize + game.cellSize, game.cellSize * .125);
+                    ctx.stroke();
+                    ctx.closePath();
+                    // draw bottom line
+                    ctx.beginPath();
+                    ctx.moveTo(x * game.cellSize, game.cellSize - (game.cellSize * .125));
+                    ctx.lineTo(x * game.cellSize + game.cellSize, game.cellSize - (game.cellSize * .125));
+                    ctx.stroke();
+                    ctx.closePath();
+                }
 
+                // draw ship counts
                 if (x > 5) {
                     if (game.state === 0 && name === 'player') {
 
-                        DrawText(ctx)((x * game.cellSize) + 15, game.cellSize * .7, game.cellSize, data.available[x - 4]);
+                        DrawText(ctx)((x * game.cellSize) + 2, game.cellSize * .7, game.cellSize, data.available[x - 4]);
                     } else {
 
-                        DrawText(ctx)((x * game.cellSize) + 15, game.cellSize * .7, game.cellSize, data.remaining[x - 4]);
+                        DrawText(ctx)((x * game.cellSize) + 2, game.cellSize * .7, game.cellSize, data.remaining[x - 4]);
                     }
                 }
             }
@@ -202,7 +232,7 @@ var battleship = function () {
 
                     color = 'White';
                 }
-                DrawText(ctx)(0, game.cellSize * 1.7, game.size * game.cellSize, text, 30, true, color);
+                DrawMessage(ctx)(text, color);
             }
         };
     }
@@ -297,30 +327,30 @@ var battleship = function () {
 
             // Clear cell first.
             DrawCell(ctx)(row, column);
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 2;
             ctx.strokeStyle = 'red';
 
             // Start at the top middle of the selected cell. Vertical line.
             x = (row * game.cellSize) + (game.cellSize / 2);
-            y = (column * game.cellSize) + 4;
+            y = (column * game.cellSize) + 2;
             ctx.beginPath();
             ctx.moveTo(x, y);
-            ctx.lineTo(x, y + game.cellSize - 8);
+            ctx.lineTo(x, y + game.cellSize - 4);
             ctx.stroke();
             ctx.closePath();
             // Horizontal line.
-            x = (row * game.cellSize) + 4;
+            x = (row * game.cellSize) + 2;
             y = (column * game.cellSize) + (game.cellSize / 2);
             ctx.beginPath();
             ctx.moveTo(x, y);
-            ctx.lineTo(x + game.cellSize - 8, y);
+            ctx.lineTo(x + game.cellSize - 4, y);
             ctx.stroke();
             ctx.closePath();
             // Draw circle.
             x = (row * game.cellSize) + (game.cellSize / 2);
             y = (column * game.cellSize) + (game.cellSize / 2);
             ctx.beginPath();
-            ctx.arc(x, y, (game.cellSize / 2) - 8, 0, 2 * Math.PI);
+            ctx.arc(x, y, (game.cellSize / 2) - 4, 0, 2 * Math.PI);
             ctx.stroke();
             ctx.closePath();
 
@@ -357,8 +387,6 @@ var battleship = function () {
 
 
             drawPlayerStatus(ctx)('Place your ships.', 'Green', name);
-
-            drawButtons(ctx)(name);
         }
     }
 
@@ -378,7 +406,8 @@ var battleship = function () {
             button: DrawCircle,
             buttons: drawButtons(ctx),
             grid: drawGrid(ctx),
-            status: drawPlayerStatus(ctx)
+            status: drawPlayerStatus(ctx),
+            message: DrawMessage(ctx)
         };
     }
 
@@ -556,10 +585,13 @@ var battleship = function () {
         }
     }
 
-    function NewGame() {
+    function NewGame(background) {
 
         $('#tagetPanel').addClass('hidden');
-        $('#playerMap').removeClass('hidden');
+        if (!background) {
+
+            $('#playerMap').removeClass('hidden');
+        }
 
         game.state = 0;
         game.turn = 1;
@@ -983,315 +1015,338 @@ var battleship = function () {
         }
     }
 
-    function Load() {
+    function oppenentAreaClick(event) {
+        var x, y, count, button, draw, drawPlayer, playerScore, opponentScore, ships, difference, percent;
 
-        NewGame();
-        // Click events.
+        draw = new Draw(opponent.area);
+        drawPlayer = new Draw(player.area);
 
-        opponent.area.click(function (event) {
-            var x, y, count, button, draw, drawPlayer, playerScore, opponentScore, ships, difference, percent;
+        x = Math.floor((event.pageX - opponent.area.offset().left) / game.cellSize);
+        y = Math.floor((event.pageY - opponent.area.offset().top) / game.cellSize);
 
-            draw = new Draw(opponent.area);
-            drawPlayer = new Draw(player.area);
+        if (x < 0) {
+            x = 0;
+        }
+        if (y < 0) {
+            y = 0;
+        }
 
-            x = Math.floor((event.pageX - opponent.area.offset().left) / game.cellSize);
-            y = Math.floor((event.pageY - opponent.area.offset().top) / game.cellSize);
+        if (y >= game.size + game.yOffset) {
+            x = Math.floor(x / 2);
+            y = Math.floor((y - 10) / 2);
 
-            if (x < 0) {
-                x = 0;
+            button = y.toString() + x.toString();
+
+            switch (button) {
+                case '10':
+                    // Fire
+                    if (game.state === 2) {
+
+                        // Show player hits.
+                        playerScore = ShowHits(opponent.grid, opponent, true);
+
+                        // Show opponent hits.
+                        opponentScore = ShowHits(player.grid, player);
+
+                        ships = UpdatePlayerShips(player);
+                        UpdatePlayerShips(opponent);
+
+                        difference = opponent.lastCount - opponent.count;
+                        percent = Math.round((playerScore.hits / GetTargetCount(opponent.grid)) * 100);
+
+                        draw.status('Hits: ' + playerScore.hits + (percent ? ' (' + percent + '%)' : '') + (difference ? ', Ships destroyed: ' + difference : ''), 'Green', opponent.name);
+
+                        difference = player.lastCount - player.count;
+                        percent = Math.round((opponentScore.hits / GetTargetCount(player.grid)) * 100);
+
+                        if (game.state === 3) {
+
+                            drawPlayer.status('Game Over', 'Red', player.name);
+                        } else {
+
+                            if (!percent) {
+                                percent = '0';
+                            }
+                            drawPlayer.status('Hits: ' + opponentScore.hits + ' (' + percent + '%)' + (difference ? ', Ships destroyed: ' + difference : ''), 'Red', player.name);
+                        }
+
+                        ShowDestroyedShips(opponent.grid, opponent);
+
+                        game.turn += 1;
+                        // Check for winner.
+                        if (player.count === 0 || opponent.count === 0) {
+                            // Game over.
+                            switch (0) {
+                                case player.count + opponent.count:
+                                    // Tie.
+                                    draw.text(0, game.cellSize * 1.7, game.size * game.cellSize, 'Game Over - Tie', (game.cellSize / 2), true, 'Orange');
+                                    ShowStats('Tie');
+                                    break;
+                                case player.count:
+                                    draw.text(0, game.cellSize * 1.7, game.size * game.cellSize, 'Game Over - Computer Wins', (game.cellSize / 2), true, 'Red');
+                                    ShowStats('Computer');
+                                    break;
+                                case opponent.count:
+                                    draw.text(0, game.cellSize * 1.7, game.size * game.cellSize, 'Game Over - You Win', (game.cellSize / 2), true, 'Green');
+                                    ShowStats('You');
+                                    break;
+                                default:
+
+                            }
+                            game.state = 3;
+                        } else {
+                            if (game.turn > 1 && game.level > 0) {
+                                // Target around hits.
+                                CreateCloseTargets(player.grid, player, opponent);
+                            }
+                            // Set opponent targets.
+                            CreateRandomTargets(opponent, player);
+                        }
+                    }
+                    if (game.state > 0 && game.state < 3) {
+
+                        game.state = 1;
+                    }
+                    break;
+                case '11':
+                    // Auto
+                    if (game.state === 1 || game.state === 2) {
+
+                        draw.message('All targets selected. Fire when ready.', 'Green');
+                        CreateRandomTargets(player, opponent, true);
+
+                        if (game.state === 1) {
+                            game.state = 2;
+                        }
+                    }
+                    break;
+                case '12':
+                    // Quit
+                    NewGame();
+                    break;
+                case '13':
+                    // No button
+                    break;
+                case '14':
+                    // Switch Maps
+                    //var target = document.getElementById('targetPanel');
+                    //target.className = target.className + ' hidden';
+                    $('#tagetPanel').addClass('hidden');
+                    //var player = document.getElementById('playerMap');
+                    //player.className = player.className.replace('hidden', '');
+                    $('#playerMap').removeClass('hidden');
+                    break;
+                default:
+
             }
-            if (y < 0) {
-                y = 0;
-            }
+        } else if (y >= game.yOffset) {
 
-            if (y >= game.size + game.yOffset) {
-                x = Math.floor(x / 2);
-                y = Math.floor((y - 10) / 2);
-
-                button = y.toString() + x.toString();
-
-                switch (button) {
-                    case '10':
-                        // Fire
-                        if (game.state === 2) {
-
-                            // Show player hits.
-                            playerScore = ShowHits(opponent.grid, opponent, true);
-
-                            // Show opponent hits.
-                            opponentScore = ShowHits(player.grid, player);
-
-                            ships = UpdatePlayerShips(player);
-                            UpdatePlayerShips(opponent);
-
-                            difference = opponent.lastCount - opponent.count;
-                            percent = Math.round((playerScore.hits / GetTargetCount(opponent.grid)) * 100);
-
-                            draw.status('Hits: ' + playerScore.hits + (percent ? ' (' + percent + '%)' : '') + (difference ? ', Ships destroyed: ' + difference : ''), 'Green', opponent.name);
-
-                            difference = player.lastCount - player.count;
-                            percent = Math.round((opponentScore.hits / GetTargetCount(player.grid)) * 100);
-
-                            if (percent) {
-
-                                drawPlayer.status('Hits: ' + playerScore.hits + ' (' + percent + '%)' + (difference ? ', Ships destroyed: ' + difference : ''), 'Red', player.name);
-                            } else {
-
-                                drawPlayer.status('Game Over', 'Red', player.name);
-                            }
-
-                            ShowDestroyedShips(opponent.grid, opponent);
-
-                            game.turn += 1;
-                            // Check for winner.
-                            if (player.count === 0 || opponent.count === 0) {
-                                // Game over.
-                                switch (0) {
-                                    case player.count + opponent.count:
-                                        // Tie.
-                                        draw.text(0, game.cellSize * 1.7, game.size * game.cellSize, 'Game Over - Tie', 30, true, 'Orange');
-                                        ShowStats('Tie');
-                                        break;
-                                    case player.count:
-                                        draw.text(0, game.cellSize * 1.7, game.size * game.cellSize, 'Game Over - Computer Wins', 30, true, 'Red');
-                                        ShowStats('Computer');
-                                        break;
-                                    case opponent.count:
-                                        draw.text(0, game.cellSize * 1.7, game.size * game.cellSize, 'Game Over - You Win', 30, true, 'Green');
-                                        ShowStats('You');
-                                        break;
-                                    default:
-
-                                }
-                                game.state = 3;
-                            } else {
-                                if (game.turn > 1 && game.level > 0) {
-                                    // Target around hits.
-                                    CreateCloseTargets(player.grid, player, opponent);
-                                }
-                                // Set opponent targets.
-                                CreateRandomTargets(opponent, player);
-                            }
-                        }
-                        if (game.state > 0 && game.state < 3) {
-
-                            game.state = 1;
-                        }
-                        break;
-                    case '11':
-                        // Auto
-                        if (game.state === 1 || game.state === 2) {
-                            CreateRandomTargets(player, opponent, true);
-                            draw.status('All targets selected. Fire when ready.', 'Green', opponent.name);
-
-                            if (game.state === 1) {
-                                game.state = 2;
-                            }
-                        }
-                        break;
-                    case '12':
-                        // Quit
-                        NewGame();
-                        break;
-                    case '13':
-                        // No button
-                        break;
-                    case '14':
-                        // Switch Maps
-                        $('#tagetPanel').addClass('hidden');
-                        $('#playerMap').removeClass('hidden');
-                        break;
-                    default:
-
-                }
-            } else if (y >= game.yOffset) {
+            if ((game.state === 1 || game.state === 2) && (!opponent.grid[x][y].turn || opponent.grid[x][y].turn === game.turn)) {
 
                 count = player.RemainingTargets(game.level) - GetTargetCount(opponent.grid);
 
-                if ((game.state === 1 || game.state === 2) && (!opponent.grid[x][y].turn || opponent.grid[x][y].turn === game.turn)) {
-                    // Set targets.
-                    if (opponent.grid[x][y].target || (!opponent.grid[x][y].target && count)) {
-                        SetTarget(opponent, x, y, true, count, true);
-                        count = player.RemainingTargets(game.level) - GetTargetCount(opponent.grid);
-                    }
-
-                    if (!GetTargetCount(opponent.grid) && game.state !== 1) {
-                        game.state = 1;
-                    } else {
-                        game.state = 2;
-                    }
+                // Set targets.
+                if (opponent.grid[x][y].target || (!opponent.grid[x][y].target && count)) {
+                    SetTarget(opponent, x, y, true, count, true);
+                    count = player.RemainingTargets(game.level) - GetTargetCount(opponent.grid);
                 }
 
-                draw.status('Remaining Targets: ' + count.toString(), 'Green', opponent.name);
+                if (!GetTargetCount(opponent.grid) && game.state !== 1) {
+                    game.state = 1;
+                } else {
+                    game.state = 2;
+                }
+
+                draw.message('Remaining Targets: ' + count.toString(), 'Green');
             }
+        }
 
-        });
+    }
 
-        player.area.click(function (event) {
-            var x, y, i, size, hits, id, shipSize, draw, drawOpp, direction, button;
+    function playerAreaClick(event) {
+        var x, y, i, size, hits, id, shipSize, draw, drawOpp, direction, button;
 
-            draw = new Draw(player.area);
-            drawOpp = new Draw(opponent.area);
+        draw = new Draw(player.area);
+        drawOpp = new Draw(opponent.area);
 
-            x = Math.floor((event.pageX - player.area.offset().left) / game.cellSize);
-            y = Math.floor((event.pageY - player.area.offset().top) / game.cellSize);
+        x = Math.floor((event.pageX - player.area.offset().left) / game.cellSize);
+        y = Math.floor((event.pageY - player.area.offset().top) / game.cellSize);
 
-            if (x < 0) {
-                x = 0;
-            }
-            if (y < 0) {
-                y = 0;
-            }
+        if (x < 0) {
+            x = 0;
+        }
+        if (y < 0) {
+            y = 0;
+        }
 
-            if (y >= game.size + game.yOffset) {
-                x = Math.floor(x / 2);
-                y = Math.floor((y - 10) / 2);
+        if (y >= game.size + game.yOffset) {
+            x = Math.floor(x / 2);
+            y = Math.floor((y - 10) / 2);
 
-                button = y.toString() + x.toString();
+            button = y.toString() + x.toString();
 
-                switch (button) {
-                    case '10':
-                        // Ready
-                        if (game.state > 0 || (game.state === 0 && player.count > 9)) {
+            switch (button) {
+                case '10':
+                    // Ready
+                    if (game.state > 0 || (game.state === 0 && player.count > 9)) {
 
-                            $('#playerMap').addClass('hidden');
-                            $('#tagetPanel').removeClass('hidden');
-                            game.state = 1;
-                            // Set opponent targets.
-                            CreateRandomTargets(opponent, player);
-                            draw.status('Game started. My Ships.', 'Green', player.name);
-                            drawOpp.status('Select your targets. Available Targets: ' + (player.RemainingTargets(game.level) - GetTargetCount(opponent.grid)), 'Green', opponent.name);
-                            draw.buttons('player');
-                        }
-                        break;
-                    case '11':
-                        // Auto
-                        if (game.state === 0) {
-
-                            clearPlayerMap();
-
-                            CreateRandomFleet(player, true);
-                            ResetFleet();
-                            draw.status('All ships placed. Hit Ready to continue.', 'Green', player.name);
-                        }
-                        break;
-                    case '12':
-
-                        if (game.state === 0) {
-                            // Clear
-                            clearPlayerMap();
-                            draw.status('Place your ships.', 'Green', player.name);
-                        } else {
-                            // Quit
-                            NewGame();
-                        }
-                        break;
-                    case '13':
-                        //Level
-                        if (game.state < 1) {
-
-                            if (levels[game.level + 1]) {
-
-                                game.level += 1;
-                            } else {
-                                game.level = 0;
-                            }
-                            saveLevelToCookie();
-                            draw.buttons('player');
-                            draw.status('Level changed to ' + levels[game.level], 'White', player.name);
-                        }
-                        break;
-                    case '14':
-                        // Switch Maps
                         $('#playerMap').addClass('hidden');
                         $('#tagetPanel').removeClass('hidden');
-                        break;
-                    default:
+                        game.state = 1;
+                        // Set opponent targets.
+                        CreateRandomTargets(opponent, player);
+                        draw.status('Game started. My Ships.', 'Green', player.name);
+                        drawOpp.status('Select your targets. Available Targets: ' + (player.RemainingTargets(game.level) - GetTargetCount(opponent.grid)), 'Green', opponent.name);
+                        draw.buttons('player');
+                    }
+                    break;
+                case '11':
+                    // Auto
+                    if (game.state === 0) {
 
-                }
-            } else if (y >= game.yOffset) {
+                        clearPlayerMap();
 
-                if (game.state === 0 && player.count < 10 && !player.grid[x][y].ship.id) {
-                    // Set fleet.
-                    if (!startPos) {
-                        startPos = {
-                            x: x, y: y
-                        };
-                        draw.select(x, y);
-                        draw.status('Click again to set the end of the ship.', 'Green', player.name);
+                        CreateRandomFleet(player, true);
+                        ResetFleet();
+                        draw.status('All ships placed. Hit Ready to continue.', 'Green', player.name);
+                    }
+                    break;
+                case '12':
+
+                    if (game.state === 0) {
+                        // Clear
+                        clearPlayerMap();
+                        draw.status('Place your ships.', 'Green', player.name);
                     } else {
-                        // Check direction and get size.
-                        switch (true) {
-                            case x === startPos.x:
-                                if (y < startPos.y) {
-                                    endPos = startPos;
-                                    startPos = {
-                                        x: x, y: y
-                                    };
-                                    x = endPos.x;
-                                    y = endPos.y;
-                                } else {
-                                    endPos = {
-                                        x: x, y: y
-                                    };
-                                }
-                                size = endPos.y - startPos.y + 1;
-                                direction = 'h';
-                                break;
-                            case y === startPos.y:
-                                if (x < startPos.x) {
-                                    endPos = startPos;
-                                    startPos = {
-                                        x: x, y: y
-                                    };
-                                    x = endPos.x;
-                                    y = endPos.y;
-                                } else {
-                                    endPos = {
-                                        x: x, y: y
-                                    };
-                                }
-                                size = endPos.x - startPos.x + 1;
-                                direction = 'v';
-                                break;
-                            default:
-                                draw.cell(startPos.x, startPos.y);
+                        // Quit
+                        NewGame();
+                    }
+                    break;
+                case '13':
+                    //Level
+                    if (game.state < 1) {
+
+                        if (levels[game.level + 1]) {
+
+                            game.level += 1;
+                        } else {
+                            game.level = 0;
+                        }
+                        saveLevelToCookie();
+                        draw.buttons('player');
+                        draw.status('Level changed to ' + levels[game.level], 'White', player.name);
+                    }
+                    break;
+                case '14':
+                    // Switch Maps
+                    $('#playerMap').addClass('hidden');
+                    $('#tagetPanel').removeClass('hidden');
+                    break;
+                default:
+
+            }
+        } else if (y >= game.yOffset) {
+
+            if (game.state === 0 && player.count < 10 && !player.grid[x][y].ship.id) {
+                // Set fleet.
+                if (!startPos) {
+                    startPos = {
+                        x: x, y: y
+                    };
+                    draw.select(x, y);
+                    draw.status('Click again to set the end of the ship.', 'Green', player.name);
+                } else {
+                    // Check direction and get size.
+                    switch (true) {
+                        case x === startPos.x:
+                            if (y < startPos.y) {
+                                endPos = startPos;
                                 startPos = {
                                     x: x, y: y
                                 };
-                                endPos = undefined;
-                                draw.select(startPos.x, startPos.y);
-                                draw.status('Invalid selection.', 'Red', player.name);
-                        }
-                        if (size && HasShip(player, size)) {
-
-                            if (AddShip(player, startPos.x, startPos.y, direction, size, true)) {
-
-                                ResetFleet();
-                                draw.status(shipTypes[size] + ' added.', 'Green', player.name);
+                                x = endPos.x;
+                                y = endPos.y;
+                            } else {
+                                endPos = {
+                                    x: x, y: y
+                                };
                             }
-                            startPos = undefined;
-                            endPos = undefined;
-
-                        } else {
+                            size = endPos.y - startPos.y + 1;
+                            direction = 'h';
+                            break;
+                        case y === startPos.y:
+                            if (x < startPos.x) {
+                                endPos = startPos;
+                                startPos = {
+                                    x: x, y: y
+                                };
+                                x = endPos.x;
+                                y = endPos.y;
+                            } else {
+                                endPos = {
+                                    x: x, y: y
+                                };
+                            }
+                            size = endPos.x - startPos.x + 1;
+                            direction = 'v';
+                            break;
+                        default:
                             draw.cell(startPos.x, startPos.y);
-                            startPos = undefined;
+                            startPos = {
+                                x: x, y: y
+                            };
                             endPos = undefined;
-                        }
+                            draw.select(startPos.x, startPos.y);
+                            draw.status('Invalid selection.', 'Red', player.name);
                     }
-                    if (player.count > 9) {
-                        draw.status('All ships placed. Hit Ready to continue.', 'Green', player.name);
+                    if (size && HasShip(player, size)) {
+
+                        if (AddShip(player, startPos.x, startPos.y, direction, size, true)) {
+
+                            ResetFleet();
+                            draw.status(shipTypes[size] + ' added.', 'Green', player.name);
+                        }
+                        startPos = undefined;
+                        endPos = undefined;
+
+                    } else {
+                        draw.cell(startPos.x, startPos.y);
+                        startPos = undefined;
+                        endPos = undefined;
                     }
                 }
-
-                id = player.grid[x][y].ship.id;
-                if (id) {
-                    hits = player.ships[id].hits;
-                    shipSize = player.ships[id].size;
+                if (player.count > 9) {
+                    draw.status('All ships placed. Hit Ready to continue.', 'Green', player.name);
                 }
             }
 
+            id = player.grid[x][y].ship.id;
+            if (id) {
+                hits = player.ships[id].hits;
+                shipSize = player.ships[id].size;
+            }
+        }
+    }
 
+    function Load() {
+
+        NewGame(true);
+        // draw buttons
+        Draw(player.area).buttons(player.name);
+        Draw(opponent.area).buttons(opponent.name);
+        drawStartButton();
+        // Click events.
+
+        opponent.area.click(oppenentAreaClick);
+
+        player.area.click(playerAreaClick);
+
+        $('#startArea').click(function (event) {
+
+            // hide start
+            $('#startPage').addClass('hidden');
+            // show map
+            $('#playerMap').removeClass('hidden');
         });
 
         CreateRandomFleet(opponent);
@@ -1306,7 +1361,9 @@ var battleship = function () {
             cellSize: 60,
             turn: 1,
             level: 0,
-            yOffset: 2
+            yOffset: 2,
+            width: 600,
+            height: 840
         };
 
         game.level = getLevelFromCookie();
