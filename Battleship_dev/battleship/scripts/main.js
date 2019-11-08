@@ -1358,12 +1358,12 @@ var battleship = function () {
         game = {
             state: 0,
             size: 10,
-            cellSize: 60,
+            cellSize: 30,
             turn: 1,
             level: 0,
             yOffset: 2,
-            width: 600,
-            height: 840
+            width: 300,
+            height: 420
         };
 
         game.level = getLevelFromCookie();
