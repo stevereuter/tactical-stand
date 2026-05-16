@@ -1,0 +1,59 @@
+name: Deploy static site to GitHub Pages
+
+on:
+    release:
+        types:
+            - created
+    workflow_dispatch:
+
+permissions:
+    contents: write
+    pages: write
+    id-token: write
+
+concurrency:
+    group: pages
+    cancel-in-progress: true
+
+jobs:
+    package:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Create versioned zip from source
+              run: |
+                  VERSION="${{ github.event.release.tag_name }}"
+                  ZIP_NAME="tactical-stand-${VERSION}.zip"
+                  cd source
+                  zip -r "../${ZIP_NAME}" .
+
+            - name: Upload zip to release
+              uses: softprops/action-gh-release@v2
+              with:
+                  files: tactical-stand-${{ github.event.release.tag_name }}.zip
+
+    deploy:
+        needs: package
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Configure Pages
+              uses: actions/configure-pages@v5
+
+            - name: Upload artifact
+              uses: actions/upload-pages-artifact@v3
+              with:
+                  path: source
+
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@v4

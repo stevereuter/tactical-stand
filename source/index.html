@@ -1,0 +1,36 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>UFO Intercept: Tactical Stand</title>
+    <link href="css/style.css" rel="stylesheet" />
+    <script src="scripts/main.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <header class="page-header">
+        <h1 class="text-center">UFO Intercept: Tactical Stand</h1>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div id="startPage" class="col-md-6 text-center">
+                <h2>How to Play</h2>
+                <p>Destroy the attacker spaceships before yours are destroyed.</p>
+                <p>Place you spaceships by tapping the start and end positions for each spaceship.
+                Once all of your spaceships have been placed, set targets that you wish to attack. 
+                You get one target for each of you remaining spaceships (except on extreme).</p>
+                <canvas id="startArea" width="300" height="200"></canvas>
+            </div><!-- Start Page -->
+            <div id="targetPanel" class="col-md-6 hidden text-center">
+                <h2>Opponent Area</h2>
+                <canvas id="opponentArea" width="300" height="420"></canvas>
+            </div><!-- Opponent Area -->
+            <div id="playerMap" class="col-md-6 hidden text-center">
+                <h2>Player Area</h2>
+                <canvas id="playerArea" width="300" height="420"></canvas>
+            </div><!-- Player Area -->
+
+        </div>
+    </div>
+</body>
+</html>
