@@ -125,13 +125,14 @@
 
     function drawButtons(ctx) {
         return function (name) {
-            var x, y, size, level, offset, gradient, color, text;
+            let offset, color, text;
 
-            x = 0;
-            y = 360;
-            size = game.cellSize * 2;
+            let x = 0;
+            const y = 360;
+            const size = game.cellSize * 2;
+            const spacing = size + size / 3;
 
-            for (x = 0; x < game.width; x += size) {
+            for (x = 0; x < game.width; x += spacing) {
                 text = "";
 
                 switch (x) {
@@ -140,13 +141,13 @@
                         text = name === "opponent" ? "Fire" : "Ready";
                         offset = name === "opponent" ? game.cellSize / 2 : 7.5;
                         break;
-                    case 60:
+                    case spacing:
                         color = "Orange";
                         text =
                             name === "player" && game.state > 0 ? "" : "Auto";
                         offset = 12.5;
                         break;
-                    case 120:
+                    case spacing * 2:
                         color = "Red";
                         text =
                             game.state === 0 && name === "player"
@@ -156,29 +157,6 @@
                             game.state === 0 && name === "player"
                                 ? 10
                                 : game.cellSize / 2;
-                        break;
-                    case 180:
-                        if (name === "player") {
-                            color = "DarkSlateGray";
-                            text = levels[game.level];
-                            switch (game.level) {
-                                case 0:
-                                    offset = 12.5;
-                                    break;
-                                case 1:
-                                    offset = 5;
-                                    break;
-                                case 2:
-                                    offset = 12.5;
-                                    break;
-                                case 3:
-                                    offset = 2.5;
-                                    break;
-                                default:
-                                    offset = game.cellSize / 2;
-                            }
-                        }
-
                         break;
                     default:
                         color = "#003300";
@@ -507,40 +485,6 @@
 
     //#endregion
 
-    function saveLevelToCookie() {
-        var expires, today;
-
-        today = new Date();
-        expires = new Date(
-            today.getFullYear(),
-            today.getMonth() + 3,
-            today.getDate(),
-        );
-
-        document.cookie =
-            "tacticalStandLevel=" +
-            game.level +
-            "; expires=" +
-            expires.toUTCString();
-    }
-
-    function getLevelFromCookie() {
-        var cookies, cookie, c, regex;
-
-        cookies = document.cookie.split(";");
-        regex = /tacticalStandLevel/;
-        for (c in cookies) {
-            cookie = cookies[c].split("=");
-            if (regex.test(cookie[0])) {
-                return parseInt(cookie[1], 10);
-            }
-        }
-
-        saveLevelToCookie();
-
-        return game.level;
-    }
-
     function GetTargetCount(data) {
         var count, r, c;
         count = 0;
@@ -577,39 +521,6 @@
         }
 
         return count;
-    }
-
-    function GetData(type) {
-        return function (row, column) {
-            var data;
-
-            if (!type) {
-                return;
-            }
-
-            switch (type) {
-                case "player":
-                    data = player.grid;
-                    break;
-                case "opponent":
-                    data = opponent.grid;
-                    break;
-                default:
-                    return;
-            }
-
-            if (row >= 0) {
-                if (!column) {
-                    // Grid number passed instead of row column.
-                    column = row % game.size;
-                    row = Math.floor(row / game.size);
-                }
-
-                return data[row][column];
-            } else {
-                return data;
-            }
-        };
     }
 
     function CreateGrid(player, rows, columns) {
@@ -1154,7 +1065,7 @@
         }
     }
 
-    function ShowStats(winner) {
+    function ShowStats() {
         var stats;
 
         stats = GetStats();
@@ -1171,26 +1082,14 @@
     }
 
     function opponentAreaClick(event) {
-        var x,
-            y,
-            count,
-            button,
-            draw,
-            drawPlayer,
-            playerScore,
-            opponentScore,
-            ships,
-            difference,
-            percent;
+        const draw = new Draw(opponent.area);
+        const drawPlayer = new Draw(player.area);
 
-        draw = new Draw(opponent.area);
-        drawPlayer = new Draw(player.area);
-
-        x = Math.floor(
+        let x = Math.floor(
             (event.pageX - opponent.area.getBoundingClientRect().left) /
                 game.cellSize,
         );
-        y = Math.floor(
+        let y = Math.floor(
             (event.pageY - opponent.area.getBoundingClientRect().top) /
                 game.cellSize,
         );
@@ -1203,26 +1102,26 @@
         }
 
         if (y >= game.size + game.yOffset) {
-            x = Math.floor(x / 2);
-            y = Math.floor((y - 10) / 2);
-
-            button = y.toString() + x.toString();
-
-            switch (button) {
-                case "10":
+            switch (x) {
+                case 0:
+                case 1:
                     // Fire
                     if (game.state === 2) {
                         // Show player hits.
-                        playerScore = ShowHits(opponent.grid, opponent, true);
+                        const playerScore = ShowHits(
+                            opponent.grid,
+                            opponent,
+                            true,
+                        );
 
                         // Show opponent hits.
-                        opponentScore = ShowHits(player.grid, player);
+                        const opponentScore = ShowHits(player.grid, player);
 
-                        ships = UpdatePlayerShips(player);
+                        UpdatePlayerShips(player);
                         UpdatePlayerShips(opponent);
 
-                        difference = opponent.lastCount - opponent.count;
-                        percent = Math.round(
+                        let difference = opponent.lastCount - opponent.count;
+                        let percent = Math.round(
                             (playerScore.hits / GetTargetCount(opponent.grid)) *
                                 100,
                         );
@@ -1283,6 +1182,7 @@
                                         "Orange",
                                     );
                                     ShowStats("Tie");
+                                    // TODO: change quit button to next
                                     break;
                                 case player.count:
                                     draw.text(
@@ -1295,6 +1195,7 @@
                                         "Red",
                                     );
                                     ShowStats("Computer");
+                                    // TODO: quit button needs to reset the level to 0
                                     break;
                                 case opponent.count:
                                     draw.text(
@@ -1307,6 +1208,7 @@
                                         "Green",
                                     );
                                     ShowStats("You");
+                                    // TODO: change quit button to next
                                     break;
                                 default:
                             }
@@ -1328,7 +1230,9 @@
                         game.state = 1;
                     }
                     break;
-                case "11":
+                case 2:
+                case 3:
+                case 4:
                     // Auto
                     if (game.state === 1 || game.state === 2) {
                         draw.message(
@@ -1342,22 +1246,18 @@
                         }
                     }
                     break;
-                case "12":
+                case 5:
+                case 6:
+                case 7:
                     // Quit
                     NewGame();
                     break;
-                case "13":
-                    // No button
-                    break;
-                case "14":
+                case 8:
+                case 9:
                     // Switch Maps
-                    //var target = document.getElementById('targetPanel');
-                    //target.className = target.className + ' hidden';
                     document
                         .querySelector("#targetPanel")
                         .classList.add("hidden");
-                    //var player = document.getElementById('playerMap');
-                    //player.className = player.className.replace('hidden', '');
                     document
                         .querySelector("#playerMap")
                         .classList.remove("hidden");
@@ -1370,7 +1270,7 @@
                 (!opponent.grid[x][y].turn ||
                     opponent.grid[x][y].turn === game.turn)
             ) {
-                count =
+                let count =
                     player.RemainingTargets(game.level) -
                     GetTargetCount(opponent.grid);
 
@@ -1397,16 +1297,14 @@
     }
 
     function playerAreaClick(event) {
-        var x, y, i, size, hits, id, shipSize, draw, drawOpp, direction, button;
+        const draw = new Draw(player.area);
+        const drawOpp = new Draw(opponent.area);
 
-        draw = new Draw(player.area);
-        drawOpp = new Draw(opponent.area);
-
-        x = Math.floor(
+        let x = Math.floor(
             (event.pageX - player.area.getBoundingClientRect().left) /
                 game.cellSize,
         );
-        y = Math.floor(
+        let y = Math.floor(
             (event.pageY - player.area.getBoundingClientRect().top) /
                 game.cellSize,
         );
@@ -1419,13 +1317,9 @@
         }
 
         if (y >= game.size + game.yOffset) {
-            x = Math.floor(x / 2);
-            y = Math.floor((y - 10) / 2);
-
-            button = y.toString() + x.toString();
-
-            switch (button) {
-                case "10":
+            switch (x) {
+                case 0:
+                case 1:
                     // Ready
                     if (
                         game.state > 0 ||
@@ -1455,7 +1349,9 @@
                         draw.buttons("player");
                     }
                     break;
-                case "11":
+                case 2:
+                case 3:
+                case 4:
                     // Auto
                     if (game.state === 0) {
                         clearPlayerMap();
@@ -1469,7 +1365,9 @@
                         );
                     }
                     break;
-                case "12":
+                case 5:
+                case 6:
+                case 7:
                     if (game.state === 0) {
                         // Clear
                         clearPlayerMap();
@@ -1479,24 +1377,7 @@
                         NewGame();
                     }
                     break;
-                case "13":
-                    //Level
-                    if (game.state < 1) {
-                        if (levels[game.level + 1]) {
-                            game.level += 1;
-                        } else {
-                            game.level = 0;
-                        }
-                        saveLevelToCookie();
-                        draw.buttons("player");
-                        draw.status(
-                            "Level changed to " + levels[game.level],
-                            "White",
-                            player.name,
-                        );
-                    }
-                    break;
-                case "14":
+                default:
                     // Switch Maps
                     document
                         .querySelector("#playerMap")
@@ -1505,7 +1386,6 @@
                         .querySelector("#targetPanel")
                         .classList.remove("hidden");
                     break;
-                default:
             }
         } else if (y >= game.yOffset) {
             if (
@@ -1527,6 +1407,8 @@
                     );
                 } else {
                     // Check direction and get size.
+                    let size;
+                    let direction;
                     switch (true) {
                         case x === startPos.x:
                             if (y < startPos.y) {
@@ -1612,12 +1494,6 @@
                     );
                 }
             }
-
-            id = player.grid[x][y].ship.id;
-            if (id) {
-                hits = player.ships[id].hits;
-                shipSize = player.ships[id].size;
-            }
         }
     }
 
@@ -1658,7 +1534,7 @@
             height: 420,
         };
 
-        game.level = getLevelFromCookie();
+        game.level = 0;
 
         levels = {
             0: "Easy",
