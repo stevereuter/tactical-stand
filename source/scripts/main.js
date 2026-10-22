@@ -1,5 +1,12 @@
 ﻿var tacticalStand = (function () {
-    var player, opponent, game, startPos, endPos, levels, shipTypes;
+    let player, opponent, game, startPos, endPos, shipTypes;
+
+    const levels = {
+        0: "First Wave",
+        1: "Second Wave",
+        2: "Third Wave",
+        3: "Fourth Wave",
+    };
 
     // Methods
 
@@ -139,13 +146,13 @@
                     case 0:
                         color = "Green";
                         text = name === "opponent" ? "Fire" : "Ready";
-                        offset = name === "opponent" ? game.cellSize / 2 : 7.5;
+                        offset = name === "opponent" ? 12 : 8;
                         break;
                     case spacing:
                         color = "Orange";
                         text =
                             name === "player" && game.state > 0 ? "" : "Auto";
-                        offset = 12.5;
+                        offset = 12;
                         break;
                     case spacing * 2:
                         color = "Red";
@@ -153,15 +160,12 @@
                             game.state === 0 && name === "player"
                                 ? "Clear"
                                 : "Quit";
-                        offset =
-                            game.state === 0 && name === "player"
-                                ? 10
-                                : game.cellSize / 2;
+                        offset = game.state === 0 && name === "player" ? 8 : 12;
                         break;
                     default:
                         color = "#003300";
                         text = "Switch";
-                        offset = 7.5;
+                        offset = 2;
                         break;
                 }
 
@@ -458,7 +462,11 @@
                 }
             }
 
-            drawPlayerStatus(ctx)("Place your ships.", "Green", name);
+            drawPlayerStatus(ctx)(
+                `${levels[game.level]}: Position your ships.`,
+                "Green",
+                name,
+            );
         };
     }
 
@@ -475,7 +483,7 @@
             miss: DrawMiss(ctx),
             text: DrawText(ctx),
             ship: DrawShip(ctx),
-            button: DrawCircle,
+            button: DrawCircle(ctx),
             buttons: drawButtons(ctx),
             grid: drawGrid(ctx),
             status: drawPlayerStatus(ctx),
@@ -576,19 +584,8 @@
             },
             score: { hits: 0, misses: 0 },
             RemainingTargets: function (level) {
-                var count;
-                switch (level) {
-                    case 3:
-                        count = Math.round(this.count * 0.8);
-                        break;
-                    case 2:
-                        count = Math.round(this.count * 0.51);
-                        break;
-                    default:
-                        count = this.count;
-                }
-
-                return count;
+                if (level === 3) return Math.round(this.count * 0.8);
+                return this.count;
             },
         };
     }
@@ -800,7 +797,7 @@
     }
 
     function CreateRandomTargets(player, opponent, show) {
-        var i, count, position, freeCells;
+        let count;
 
         if (player.name === "opponent" && game.level > 2) {
             count = GetFreeCellCount(
@@ -815,8 +812,8 @@
             );
         }
 
-        for (i = 0; i < count; i += 1) {
-            position = GetRandomTargetPosition(opponent.grid);
+        for (let i = 0; i < count; i += 1) {
+            const position = GetRandomTargetPosition(opponent.grid);
             SetTarget(opponent, position.x, position.y, show, player.count);
         }
     }
@@ -1169,50 +1166,59 @@
                         // Check for winner.
                         if (player.count === 0 || opponent.count === 0) {
                             // Game over.
+                            let isGameOver = game.level === 3;
+                            let statText;
+                            let endMessage;
                             switch (0) {
                                 case player.count + opponent.count:
-                                    // Tie.
-                                    draw.text(
-                                        0,
-                                        game.cellSize * 1.7,
-                                        game.size * game.cellSize,
-                                        "Game Over - Tie",
-                                        game.cellSize / 2,
-                                        true,
-                                        "Orange",
-                                    );
-                                    ShowStats("Tie");
-                                    // TODO: change quit button to next
+                                    // Tie, repeat the wave
+                                    endMessage = "Stalemate";
+                                    statText = "Tie";
+                                    isGameOver = false;
                                     break;
                                 case player.count:
-                                    draw.text(
-                                        0,
-                                        game.cellSize * 1.7,
-                                        game.size * game.cellSize,
-                                        "Game Over - Computer Wins",
-                                        game.cellSize / 2,
-                                        true,
-                                        "Red",
-                                    );
-                                    ShowStats("Computer");
-                                    // TODO: quit button needs to reset the level to 0
+                                    // Player defeated
+                                    endMessage = "Defeated";
+                                    statText = "Invaders";
+                                    game.level = 0;
+                                    isGameOver = true;
                                     break;
                                 case opponent.count:
-                                    draw.text(
-                                        0,
-                                        game.cellSize * 1.7,
-                                        game.size * game.cellSize,
-                                        "Game Over - You Win",
-                                        game.cellSize / 2,
-                                        true,
-                                        "Green",
-                                    );
-                                    ShowStats("You");
-                                    // TODO: change quit button to next
-                                    break;
                                 default:
+                                    // Invaders defeated
+                                    game.level += 1;
+                                    endMessage = isGameOver
+                                        ? "Victory"
+                                        : "Wave Complete";
+                                    statText = "You";
+                                    break;
                             }
+                            const isAdvancing = !isGameOver;
+                            ShowStats(statText);
+                            draw.text(
+                                0,
+                                game.cellSize * 1.7,
+                                game.size * game.cellSize,
+                                endMessage,
+                                game.cellSize / 2,
+                                true,
+                                "Green",
+                            );
                             game.state = 3;
+                            const size = game.cellSize * 2;
+                            const spacing = size + size / 3;
+                            const buttonText = isAdvancing ? "Next" : "Quit";
+                            const buttonColor = isAdvancing ? "Green" : "Red";
+                            [draw, drawPlayer].forEach((d) => {
+                                d.button(
+                                    spacing * 2,
+                                    360,
+                                    size,
+                                    buttonText,
+                                    buttonColor,
+                                    12,
+                                );
+                            });
                         } else {
                             if (game.turn > 1 && game.level > 0) {
                                 // Target around hits.
@@ -1249,8 +1255,13 @@
                 case 5:
                 case 6:
                 case 7:
-                    // Quit
+                    // Quit/Next
                     NewGame();
+                    const size = game.cellSize * 2;
+                    const spacing = size + size / 3;
+                    [draw, drawPlayer].forEach((d) => {
+                        d.button(spacing * 2, 360, size, "Quit", "Red", 12);
+                    });
                     break;
                 case 8:
                 case 9:
@@ -1359,7 +1370,7 @@
                         CreateRandomFleet(player, true);
                         ResetFleet();
                         draw.status(
-                            "All ships placed. Hit Ready to continue.",
+                            "All ships ready. Hit Ready to begin.",
                             "Green",
                             player.name,
                         );
@@ -1368,12 +1379,17 @@
                 case 5:
                 case 6:
                 case 7:
+                    // Quit, Next, and Clear
                     if (game.state === 0) {
                         // Clear
                         clearPlayerMap();
-                        draw.status("Place your ships.", "Green", player.name);
+                        draw.status(
+                            `${levels[game.level]}: Position your ships.`,
+                            "Green",
+                            player.name,
+                        );
                     } else {
-                        // Quit
+                        // Quit/Next
                         NewGame();
                     }
                     break;
@@ -1488,7 +1504,7 @@
                 }
                 if (player.count > 9) {
                     draw.status(
-                        "All ships placed. Hit Ready to continue.",
+                        "All ships ready. Hit Ready to begin.",
                         "Green",
                         player.name,
                     );
@@ -1535,13 +1551,6 @@
         };
 
         game.level = 0;
-
-        levels = {
-            0: "Easy",
-            1: "Normal",
-            2: "Hard",
-            3: "Extreme",
-        };
 
         shipTypes = [];
         shipTypes[2] = "Orbital Scout";

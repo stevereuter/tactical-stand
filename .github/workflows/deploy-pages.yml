@@ -1,7 +1,7 @@
 name: Deploy static site to GitHub Pages
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 on:
     release:
@@ -24,7 +24,7 @@ jobs:
 
         steps:
             - name: Checkout
-            uses: actions/checkout@v5
+              uses: actions/checkout@v5
 
             - name: Create versioned zip from source
               run: |
@@ -47,7 +47,7 @@ jobs:
 
         steps:
             - name: Checkout
-            uses: actions/checkout@v5
+              uses: actions/checkout@v5
 
             - name: Configure Pages
               uses: actions/configure-pages@v5
