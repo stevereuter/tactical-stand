@@ -4,8 +4,7 @@
     const levels = {
         0: "First Wave",
         1: "Second Wave",
-        2: "Third Wave",
-        3: "Fourth Wave",
+        2: "Final Wave",
     };
 
     // Methods
@@ -584,7 +583,7 @@
             },
             score: { hits: 0, misses: 0 },
             RemainingTargets: function (level) {
-                if (level === 3) return Math.round(this.count * 0.8);
+                if (level > 1) return Math.round(this.count * 0.8);
                 return this.count;
             },
         };
@@ -799,7 +798,7 @@
     function CreateRandomTargets(player, opponent, show) {
         let count;
 
-        if (player.name === "opponent" && game.level > 2) {
+        if (player.name === "opponent" && game.level > 1) {
             count = GetFreeCellCount(
                 opponent.grid,
                 player.RemainingTargets(1) - GetTargetCount(opponent.grid),
@@ -916,7 +915,7 @@
     function CreateCloseTargets(grid, opponent, player) {
         var x, y, cell, ship, count;
 
-        if (player.name === "opponent" && game.level > 2) {
+        if (player.name === "opponent" && game.level > 1) {
             count = GetFreeCellCount(opponent.grid, 10);
         } else {
             count = GetFreeCellCount(opponent.grid, player.count);
@@ -1166,21 +1165,26 @@
                         // Check for winner.
                         if (player.count === 0 || opponent.count === 0) {
                             // Game over.
-                            let isGameOver = game.level === 3;
+                            let isGameOver = game.level === 2;
+                            let isAdvancing = !isGameOver;
                             let statText;
+                            let textColor = "Green";
                             let endMessage;
                             switch (0) {
                                 case player.count + opponent.count:
                                     // Tie, repeat the wave
-                                    endMessage = "Stalemate";
+                                    endMessage = "Stalemate, Repeat this wave";
                                     statText = "Tie";
                                     isGameOver = false;
+                                    isAdvancing = false;
+                                    textColor = "Orange";
                                     break;
                                 case player.count:
                                     // Player defeated
-                                    endMessage = "Defeated";
+                                    endMessage = `Defeated on the ${levels[game.level]}`;
                                     statText = "Invaders";
                                     game.level = 0;
+                                    textColor = "Red";
                                     isGameOver = true;
                                     break;
                                 case opponent.count:
@@ -1189,11 +1193,10 @@
                                     game.level += 1;
                                     endMessage = isGameOver
                                         ? "Victory"
-                                        : "Wave Complete";
+                                        : `${levels[game.level]} Complete`;
                                     statText = "You";
                                     break;
                             }
-                            const isAdvancing = !isGameOver;
                             ShowStats(statText);
                             draw.text(
                                 0,
@@ -1202,7 +1205,7 @@
                                 endMessage,
                                 game.cellSize / 2,
                                 true,
-                                "Green",
+                                textColor,
                             );
                             game.state = 3;
                             const size = game.cellSize * 2;
@@ -1220,6 +1223,7 @@
                                 );
                             });
                         } else {
+                            // invaders turn
                             if (game.turn > 1 && game.level > 0) {
                                 // Target around hits.
                                 CreateCloseTargets(
@@ -1549,8 +1553,6 @@
             width: 300,
             height: 420,
         };
-
-        game.level = 0;
 
         shipTypes = [];
         shipTypes[2] = "Orbital Scout";
