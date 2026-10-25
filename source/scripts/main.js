@@ -1,10 +1,16 @@
-﻿var tacticalStand = (function () {
+﻿const tacticalStand = (function () {
     let player, opponent, game, startPos, endPos, shipTypes;
 
     const levels = {
         0: "First Wave",
         1: "Second Wave",
         2: "Final Wave",
+    };
+    const State = {
+        Positioning: 0,
+        Targeting: 1,
+        Firing: 2,
+        Over: 3,
     };
 
     // Methods
@@ -75,12 +81,10 @@
 
     function DrawCell(ctx) {
         return function (row, column) {
-            var x, y, width, height;
-
-            x = row * game.cellSize;
-            y = column * game.cellSize;
-            width = game.cellSize;
-            height = game.cellSize;
+            const x = row * game.cellSize;
+            const y = column * game.cellSize;
+            const width = game.cellSize;
+            const height = game.cellSize;
             ctx.strokeStyle = "grey";
 
             ctx.beginPath();
@@ -144,22 +148,21 @@
                 switch (x) {
                     case 0:
                         color = "Green";
-                        text = name === "opponent" ? "Fire" : "Ready";
-                        offset = name === "opponent" ? 12 : 8;
+                        text = name === "opponent" ? "Fire" : "Next";
+                        offset = 12;
                         break;
                     case spacing:
                         color = "Orange";
                         text =
-                            name === "player" && game.state > 0 ? "" : "Auto";
+                            name === "player" && game.state > State.Positioning
+                                ? ""
+                                : "Auto";
                         offset = 12;
                         break;
                     case spacing * 2:
                         color = "Red";
-                        text =
-                            game.state === 0 && name === "player"
-                                ? "Clear"
-                                : "Quit";
-                        offset = game.state === 0 && name === "player" ? 8 : 12;
+                        text = "Clear";
+                        offset = 8;
                         break;
                     default:
                         color = "#003300";
@@ -183,7 +186,7 @@
     }
 
     function drawStartButton() {
-        var ctx = document.querySelector("#startArea").getContext("2d");
+        const ctx = document.querySelector("#startArea").getContext("2d");
 
         DrawCircle(ctx)(125, 100, 50, undefined, "green", 0, 50);
         DrawText(ctx)(105, 140, 90, "BEGIN", 45, false, "#272b30");
@@ -191,7 +194,7 @@
 
     function drawPlayerStatus(ctx) {
         return function (text, color, name) {
-            var x, data;
+            let data;
 
             if (name === "player") {
                 data = player;
@@ -223,7 +226,7 @@
             // Draw ship counts.
             // clear
             ctx.clearRect(game.width / 2, 0, game.width, game.cellSize);
-            for (x = 5; x < 10; x += 1) {
+            for (let x = 5; x < 10; x += 1) {
                 // draw ship part
                 DrawShip(ctx)(x, 0, "v", x === 5 ? 0 : -1, false, true);
                 if (x > 5 && x < 9) {
@@ -252,7 +255,7 @@
 
                 // draw ship counts
                 if (x > 5) {
-                    if (game.state === 0 && name === "player") {
+                    if (game.state === State.Positioning && name === "player") {
                         DrawText(ctx)(
                             x * game.cellSize + 2,
                             game.cellSize * 0.7,
@@ -282,15 +285,13 @@
 
     function DrawSelect(ctx) {
         return function (row, column) {
-            var x, y, width, height;
-
             // Clear cell first.
             DrawCell(ctx)(row, column);
 
-            x = row * game.cellSize + 5;
-            y = column * game.cellSize + 5;
-            width = game.cellSize - 10;
-            height = game.cellSize - 10;
+            const x = row * game.cellSize + 5;
+            const y = column * game.cellSize + 5;
+            const width = game.cellSize - 10;
+            const height = game.cellSize - 10;
             ctx.fillStyle = "grey";
 
             ctx.beginPath();
@@ -300,17 +301,13 @@
 
     function DrawShip(ctx) {
         return function (row, column, direction, position, fill, noBorder) {
-            var x, y, width, height;
-
             // Clear cell first.
             if (!noBorder) {
                 DrawCell(ctx)(row, column);
             }
 
-            x = row * game.cellSize;
-            y = column * game.cellSize;
-            width = game.cellSize;
-            height = game.cellSize;
+            const x = row * game.cellSize;
+            const y = column * game.cellSize;
 
             ctx.save();
             ctx.fillStyle = "grey";
@@ -391,7 +388,7 @@
     function DrawTarget(ctx) {
         return function (row, column) {
             // Draw target on opponents grid.
-            var x, y;
+            let x, y;
 
             // Clear cell first.
             DrawCell(ctx)(row, column);
@@ -428,13 +425,11 @@
 
     function drawGrid(ctx) {
         return function (data, name) {
-            var x, y, cell, draw;
-
-            for (x = 0; x < data.length; x += 1) {
+            for (let x = 0; x < data.length; x += 1) {
                 // column
-                for (y = game.yOffset; y < data[x].length; y += 1) {
+                for (let y = game.yOffset; y < data[x].length; y += 1) {
                     // row
-                    cell = data[x][y];
+                    const cell = data[x][y];
 
                     DrawCell(ctx)(x, y);
                     if (name === "player" && cell.shipID) {
@@ -470,9 +465,7 @@
     }
 
     function Draw(canvas) {
-        var ctx;
-
-        ctx = canvas.getContext("2d");
+        const ctx = canvas.getContext("2d");
 
         return {
             cell: DrawCell(ctx),
@@ -493,11 +486,11 @@
     //#endregion
 
     function GetTargetCount(data) {
-        var count, r, c;
+        let count;
         count = 0;
 
-        for (r = 0; r < data.length; r++) {
-            for (c = game.yOffset; c < data[r].length; c++) {
+        for (let r = 0; r < data.length; r++) {
+            for (let c = game.yOffset; c < data[r].length; c++) {
                 if (data[r][c].target && data[r][c].turn === game.turn) {
                     count += 1;
                 }
@@ -508,9 +501,7 @@
     }
 
     function SetTarget(opponent, row, column, show, count, setOnly) {
-        var draw;
-
-        draw = new Draw(opponent.area);
+        const draw = new Draw(opponent.area);
 
         if (!opponent.grid[row][column].target) {
             if (show) {
@@ -531,21 +522,19 @@
     }
 
     function CreateGrid(player, rows, columns) {
-        var x, y, data, draw;
-
         if (!columns) {
             // Create a square grid.
             columns = rows;
         }
 
-        draw = new Draw(player.area);
-        data = [];
+        const draw = new Draw(player.area);
+        const data = [];
 
-        for (x = 0; x < rows; x += 1) {
+        for (let x = 0; x < rows; x += 1) {
             // row
             data[x] = [];
 
-            for (y = game.yOffset; y < columns + game.yOffset; y += 1) {
+            for (let y = game.yOffset; y < columns + game.yOffset; y += 1) {
                 // column
                 data[x][y] = {
                     ship: { id: 0, direction: "", position: 0 },
@@ -590,11 +579,9 @@
     }
 
     function ResetFleet() {
-        var ship, count;
+        let count = 0;
 
-        count = 0;
-
-        for (ship in player.available) {
+        for (let ship in player.available) {
             count += player.available[ship];
         }
     }
@@ -605,7 +592,7 @@
             document.querySelector("#playerMap").classList.remove("hidden");
         }
 
-        game.state = 0;
+        game.state = State.Positioning;
         game.turn = 1;
 
         player = ResetPlayer("player");
@@ -619,9 +606,7 @@
     }
 
     function HasShip(data, size) {
-        var ship;
-
-        for (ship in data.available) {
+        for (let ship in data.available) {
             if (size.toString() === ship && data.available[ship] > 0) {
                 return true;
             }
@@ -631,15 +616,11 @@
     }
 
     function AddShip(player, x, y, direction, size, show) {
-        var i, draw, id;
-
-        draw = new Draw(player.area);
-        id = player.count + 1;
+        const draw = new Draw(player.area);
+        const id = player.count + 1;
 
         function Undo(count) {
-            var i;
-
-            for (i = count; i >= 0; i -= 1) {
+            for (let i = count; i >= 0; i -= 1) {
                 if (direction === "h") {
                     x -= 1;
                 } else {
@@ -655,7 +636,7 @@
             }
         }
 
-        for (i = 0; i < size; i += 1) {
+        for (let i = 0; i < size; i += 1) {
             if (player.grid[x][y].ship.id) {
                 Undo(i - 1);
                 return;
@@ -695,18 +676,16 @@
     }
 
     function GetPositionFromIndex(index) {
-        var x, y;
-
-        y = index % 10;
-        x = Math.floor(index / 10);
+        const y = index % 10;
+        const x = Math.floor(index / 10);
 
         return { x: x, y: y + game.yOffset };
     }
 
     function GetRandomPosition(player, size) {
-        var position, i, x, y;
+        let x, y;
 
-        position = GetPositionFromIndex(
+        const position = GetPositionFromIndex(
             CreateRandomIndex(game.size * game.size),
         );
         position.direction = Math.floor(Math.random() * 2) ? "h" : "v";
@@ -726,7 +705,7 @@
         x = position.x;
         y = position.y;
 
-        for (i = 0; i < size; i++) {
+        for (let i = 0; i < size; i++) {
             if (player.grid[x][y].ship.id) {
                 // Occupied.
                 return GetRandomPosition(player, size);
@@ -742,12 +721,10 @@
     }
 
     function CreateRandomFleet(player, show) {
-        var position, a, i, count;
-
-        for (a in player.available) {
-            count = player.available[a];
-            for (i = 0; i < count; i += 1) {
-                position = GetRandomPosition(player, parseInt(a, 10));
+        for (let a in player.available) {
+            const count = player.available[a];
+            for (let i = 0; i < count; i += 1) {
+                const position = GetRandomPosition(player, parseInt(a, 10));
                 AddShip(
                     player,
                     position.x,
@@ -761,9 +738,7 @@
     }
 
     function GetRandomTargetPosition(grid) {
-        var position;
-
-        position = GetPositionFromIndex(
+        const position = GetPositionFromIndex(
             CreateRandomIndex(game.size * game.size),
         );
 
@@ -774,19 +749,17 @@
         }
     }
 
-    function GetFreeCellCount(grid, playerCount) {
-        var x, y, cell, count;
+    function GetFreeCellCount(grid, max) {
+        let count = 0;
 
-        count = 0;
-
-        for (x in grid) {
-            for (y in grid[x]) {
-                cell = grid[x][y];
+        for (let x in grid) {
+            for (let y in grid[x]) {
+                const cell = grid[x][y];
 
                 if (!cell.target) {
                     count += 1;
-                    if (count >= playerCount) {
-                        return playerCount;
+                    if (count >= max) {
+                        return max;
                     }
                 }
             }
@@ -818,15 +791,13 @@
     }
 
     function ShowHits(grid, player, clear) {
-        var x, y, draw, hits, misses;
-
-        draw = new Draw(player.area);
-        hits = 0;
-        misses = 0;
+        const draw = new Draw(player.area);
+        let hits = 0;
+        let misses = 0;
 
         // Show player hits.
-        for (x in grid) {
-            for (y in grid[x]) {
+        for (let x in grid) {
+            for (let y in grid[x]) {
                 if (grid[x][y].target && grid[x][y].turn === game.turn) {
                     if (clear) {
                         // Clear target.
@@ -854,21 +825,19 @@
     }
 
     function UpdatePlayerShips(player) {
-        var x, y, shipID, i, count;
-
-        for (x in player.grid) {
-            for (y in player.grid[x]) {
+        for (let x in player.grid) {
+            for (let y in player.grid[x]) {
                 if (
                     player.grid[x][y].hit &&
                     player.grid[x][y].turn === game.turn
                 ) {
-                    shipID = player.grid[x][y].ship.id;
+                    const shipID = player.grid[x][y].ship.id;
                     player.ships[shipID].hits += 1;
                 }
             }
         }
 
-        count = 0;
+        let count = 0;
 
         player.lastCount = player.count;
 
@@ -890,14 +859,12 @@
     }
 
     function ShowDestroyedShips(grid, player) {
-        var x, y, cell, ship, draw;
+        const draw = new Draw(player.area);
 
-        draw = new Draw(player.area);
-
-        for (x = 0; x < grid.length; x += 1) {
-            for (y = game.yOffset; y < grid[x].length; y += 1) {
-                cell = grid[x][y];
-                ship = player.ships[cell.ship.id];
+        for (let x = 0; x < grid.length; x += 1) {
+            for (let y = game.yOffset; y < grid[x].length; y += 1) {
+                const cell = grid[x][y];
+                const ship = player.ships[cell.ship.id];
                 if (ship && ship.hits === ship.size) {
                     draw.ship(
                         x,
@@ -913,7 +880,7 @@
     }
 
     function CreateCloseTargets(grid, opponent, player) {
-        var x, y, cell, ship, count;
+        let count;
 
         if (player.name === "opponent" && game.level > 1) {
             count = GetFreeCellCount(opponent.grid, 10);
@@ -921,10 +888,10 @@
             count = GetFreeCellCount(opponent.grid, player.count);
         }
 
-        for (x = 0; x < grid.length; x += 1) {
-            for (y = game.yOffset; y < grid[x].length; y += 1) {
-                cell = grid[x][y];
-                ship = opponent.ships[cell.ship.id];
+        for (let x = 0; x < grid.length; x += 1) {
+            for (let y = game.yOffset; y < grid[x].length; y += 1) {
+                const cell = grid[x][y];
+                const ship = opponent.ships[cell.ship.id];
                 if (cell.hit && ship.hits < ship.size) {
                     if (x > 0) {
                         // Target before.
@@ -947,105 +914,13 @@
         }
     }
 
-    function GetStats() {
-        var x, y, plr, opp, plrHits, oppHits, plrShots, oppShots;
-        var s,
-            pShip,
-            oShip,
-            plrLost,
-            oppLost,
-            plrRem,
-            oppRem,
-            plrNotHit,
-            oppNotHit;
-
-        plrShots = 0;
-        oppShots = 0;
-        plrHits = 0;
-        oppHits = 0;
-        plrLost = 0;
-        oppLost = 0;
-        plrRem = 0;
-        oppRem = 0;
-        plrNotHit = 0;
-        oppNotHit = 0;
-
-        for (x = 0; x < opponent.grid.length; x += 1) {
-            for (
-                y = game.yOffset;
-                y < opponent.grid.length + game.yOffset;
-                y += 1
-            ) {
-                plr = player.grid[x][y];
-                opp = opponent.grid[x][y];
-
-                if (plr.target) {
-                    plrShots += 1;
-                    if (plr.hit) {
-                        plrHits += 1;
-                    }
-                }
-                if (opp.target) {
-                    oppShots += 1;
-                    if (opp.hit) {
-                        oppHits += 1;
-                    }
-                }
-            }
-        }
-
-        // Loop through ships.
-        for (s = 1; s < opponent.ships.length; s += 1) {
-            pShip = player.ships[s];
-
-            if (pShip.hits === pShip.size) {
-                plrLost += 1;
-            } else {
-                plrRem += 1;
-            }
-            if (pShip.hits === 0) {
-                plrNotHit += 1;
-            }
-
-            oShip = opponent.ships[s];
-
-            if (oShip.hits === oShip.size) {
-                oppLost += 1;
-            } else {
-                oppRem += 1;
-            }
-            if (oShip.hits === 0) {
-                oppNotHit += 1;
-            }
-        }
-
-        return {
-            player: {
-                hits: plrHits,
-                shots: plrShots,
-                lost: plrLost,
-                remaining: plrRem,
-                notHit: plrNotHit,
-            },
-            opponent: {
-                hits: oppHits,
-                shots: oppShots,
-                lost: oppLost,
-                remaining: oppRem,
-                notHit: oppNotHit,
-            },
-        };
-    }
-
     function outlineOpponentShips() {
-        var draw, x, y, ship, cell;
+        const draw = new Draw(opponent.area);
 
-        draw = new Draw(opponent.area);
-
-        for (x = 0; x < opponent.grid.length; x += 1) {
-            for (y = game.yOffset; y < opponent.grid[x].length; y += 1) {
-                cell = opponent.grid[x][y];
-                ship = opponent.ships[cell.ship.id];
+        for (let x = 0; x < opponent.grid.length; x += 1) {
+            for (let y = game.yOffset; y < opponent.grid[x].length; y += 1) {
+                const cell = opponent.grid[x][y];
+                const ship = opponent.ships[cell.ship.id];
 
                 if (ship && ship.hits < ship.size) {
                     draw.ship(
@@ -1061,16 +936,8 @@
         }
     }
 
-    function ShowStats() {
-        var stats;
-
-        stats = GetStats();
-
-        outlineOpponentShips();
-    }
-
     function clearPlayerMap() {
-        if (game.state === 0) {
+        if (game.state === State.Positioning) {
             player = ResetPlayer("player");
             player.grid = CreateGrid(player, game.size);
             ResetFleet();
@@ -1102,7 +969,7 @@
                 case 0:
                 case 1:
                     // Fire
-                    if (game.state === 2) {
+                    if (game.state === State.Firing) {
                         // Show player hits.
                         const playerScore = ShowHits(
                             opponent.grid,
@@ -1139,7 +1006,7 @@
                                 100,
                         );
 
-                        if (game.state === 3) {
+                        if (game.state === State.Over) {
                             drawPlayer.status("Game Over", "Red", player.name);
                         } else {
                             if (!percent) {
@@ -1162,42 +1029,38 @@
                         ShowDestroyedShips(opponent.grid, opponent);
 
                         game.turn += 1;
-                        // Check for winner.
+                        // Wave complete, check for winner.
                         if (player.count === 0 || opponent.count === 0) {
-                            // Game over.
                             let isGameOver = game.level === 2;
                             let isAdvancing = !isGameOver;
-                            let statText;
                             let textColor = "Green";
                             let endMessage;
                             switch (0) {
                                 case player.count + opponent.count:
                                     // Tie, repeat the wave
                                     endMessage = "Stalemate, Repeat this wave";
-                                    statText = "Tie";
                                     isGameOver = false;
                                     isAdvancing = false;
                                     textColor = "Orange";
                                     break;
                                 case player.count:
-                                    // Player defeated
+                                    // Game over, player defeated
                                     endMessage = `Defeated on the ${levels[game.level]}`;
-                                    statText = "Invaders";
                                     game.level = 0;
                                     textColor = "Red";
                                     isGameOver = true;
+                                    isAdvancing = false;
                                     break;
                                 case opponent.count:
                                 default:
                                     // Invaders defeated
-                                    game.level += 1;
                                     endMessage = isGameOver
                                         ? "Victory"
                                         : `${levels[game.level]} Complete`;
-                                    statText = "You";
+                                    game.level += 1;
                                     break;
                             }
-                            ShowStats(statText);
+                            outlineOpponentShips();
                             draw.text(
                                 0,
                                 game.cellSize * 1.7,
@@ -1207,21 +1070,16 @@
                                 true,
                                 textColor,
                             );
-                            game.state = 3;
-                            const size = game.cellSize * 2;
-                            const spacing = size + size / 3;
-                            const buttonText = isAdvancing ? "Next" : "Quit";
-                            const buttonColor = isAdvancing ? "Green" : "Red";
-                            [draw, drawPlayer].forEach((d) => {
-                                d.button(
-                                    spacing * 2,
-                                    360,
-                                    size,
-                                    buttonText,
-                                    buttonColor,
-                                    12,
-                                );
-                            });
+                            game.state = State.Over;
+                            // update primary button
+                            draw.button(
+                                0,
+                                360,
+                                game.cellSize * 2,
+                                isAdvancing ? "Next" : "End",
+                                "Green",
+                                isAdvancing ? 12 : 16,
+                            );
                         } else {
                             // invaders turn
                             if (game.turn > 1 && game.level > 0) {
@@ -1235,40 +1093,73 @@
                             // Set opponent targets.
                             CreateRandomTargets(opponent, player);
                         }
+                        return;
                     }
-                    if (game.state > 0 && game.state < 3) {
-                        game.state = 1;
+                    if (
+                        game.state > State.Positioning &&
+                        game.state < State.Over
+                    ) {
+                        game.state = State.Targeting;
+                        return;
                     }
-                    break;
+                    // Quit/Next
+                    if (game.state === State.Over) {
+                        NewGame();
+                        const size = game.cellSize * 2;
+                        // update primary button
+                        draw.button(0, 360, size, "Fire", "Green", 12);
+                        return;
+                    }
+                    return;
                 case 2:
                 case 3:
                 case 4:
                     // Auto
-                    if (game.state === 1 || game.state === 2) {
+                    if (
+                        game.state === State.Targeting ||
+                        game.state === State.Firing
+                    ) {
                         draw.message(
                             "All targets selected. Fire when ready.",
                             "Green",
                         );
                         CreateRandomTargets(player, opponent, true);
 
-                        if (game.state === 1) {
-                            game.state = 2;
-                        }
+                        if (game.state === State.Firing) return;
+
+                        game.state = State.Firing;
+                        return;
                     }
-                    break;
+                    return;
                 case 5:
                 case 6:
                 case 7:
-                    // Quit/Next
-                    NewGame();
-                    const size = game.cellSize * 2;
-                    const spacing = size + size / 3;
-                    [draw, drawPlayer].forEach((d) => {
-                        d.button(spacing * 2, 360, size, "Quit", "Red", 12);
-                    });
-                    break;
+                    // remove targets
+                    if (game.state !== State.Firing) return;
+                    let count = 0;
+                    for (let x = 0; x < opponent.grid.length; x += 1) {
+                        for (
+                            let y = game.yOffset;
+                            y < opponent.grid[x].length;
+                            y += 1
+                        ) {
+                            if (
+                                opponent.grid[x][y].target &&
+                                opponent.grid[x][y].turn === game.turn
+                            ) {
+                                opponent.grid[x][y].target = false;
+                                opponent.grid[x][y].turn = 0;
+                                draw.cell(x, y);
+                                count += 1;
+                            }
+                        }
+                    }
+                    game.state = State.Targeting;
+                    draw.message(`Remaining targets ${count}`, "Green");
+                    return;
                 case 8:
                 case 9:
+                default:
                     // Switch Maps
                     document
                         .querySelector("#targetPanel")
@@ -1276,12 +1167,15 @@
                     document
                         .querySelector("#playerMap")
                         .classList.remove("hidden");
-                    break;
-                default:
+                    return;
             }
-        } else if (y >= game.yOffset) {
+        }
+
+        // main grid
+        if (y >= game.yOffset) {
             if (
-                (game.state === 1 || game.state === 2) &&
+                (game.state === State.Targeting ||
+                    game.state === State.Firing) &&
                 (!opponent.grid[x][y].turn ||
                     opponent.grid[x][y].turn === game.turn)
             ) {
@@ -1300,10 +1194,13 @@
                         GetTargetCount(opponent.grid);
                 }
 
-                if (!GetTargetCount(opponent.grid) && game.state !== 1) {
-                    game.state = 1;
+                if (
+                    !GetTargetCount(opponent.grid) &&
+                    game.state !== State.Targeting
+                ) {
+                    game.state = State.Targeting;
                 } else {
-                    game.state = 2;
+                    game.state = State.Firing;
                 }
 
                 draw.message("Remaining Targets: " + count.toString(), "Green");
@@ -1331,14 +1228,15 @@
             y = 0;
         }
 
+        // bottom buttons
         if (y >= game.size + game.yOffset) {
             switch (x) {
                 case 0:
                 case 1:
                     // Ready
                     if (
-                        game.state > 0 ||
-                        (game.state === 0 && player.count > 9)
+                        game.state > State.Positioning ||
+                        (game.state === State.Positioning && player.count > 9)
                     ) {
                         document
                             .querySelector("#playerMap")
@@ -1346,7 +1244,7 @@
                         document
                             .querySelector("#targetPanel")
                             .classList.remove("hidden");
-                        game.state = 1;
+                        game.state = State.Targeting;
                         // Set opponent targets.
                         CreateRandomTargets(opponent, player);
                         draw.status(
@@ -1362,13 +1260,19 @@
                             opponent.name,
                         );
                         draw.buttons("player");
+                        return;
+                    }
+                    // Quit/next
+                    if (game.state === State.Over) {
+                        NewGame();
+                        return;
                     }
                     break;
                 case 2:
                 case 3:
                 case 4:
                     // Auto
-                    if (game.state === 0) {
+                    if (game.state === State.Positioning) {
                         clearPlayerMap();
 
                         CreateRandomFleet(player, true);
@@ -1378,13 +1282,14 @@
                             "Green",
                             player.name,
                         );
+                        return;
                     }
                     break;
                 case 5:
                 case 6:
                 case 7:
-                    // Quit, Next, and Clear
-                    if (game.state === 0) {
+                    // Clear ships
+                    if (game.state === State.Positioning) {
                         // Clear
                         clearPlayerMap();
                         draw.status(
@@ -1392,9 +1297,7 @@
                             "Green",
                             player.name,
                         );
-                    } else {
-                        // Quit/Next
-                        NewGame();
+                        return;
                     }
                     break;
                 default:
@@ -1405,11 +1308,15 @@
                     document
                         .querySelector("#targetPanel")
                         .classList.remove("hidden");
-                    break;
+                    return;
             }
-        } else if (y >= game.yOffset) {
+            return;
+        }
+
+        // main grid
+        if (y >= game.yOffset) {
             if (
-                game.state === 0 &&
+                game.state === State.Positioning &&
                 player.count < 10 &&
                 !player.grid[x][y].ship.id
             ) {
@@ -1531,7 +1438,7 @@
 
         document
             .querySelector("#startArea")
-            .addEventListener("click", function (event) {
+            .addEventListener("click", function () {
                 // hide start
                 document.querySelector("#startPage").classList.add("hidden");
                 // show map
@@ -1559,7 +1466,6 @@
         shipTypes[3] = "System Enforcer";
         shipTypes[4] = "Galactic Fighter";
         shipTypes[5] = "Interstellar Command";
-        // States: 0 positioning, 1 targeting, 2 firing, 3 over
     })();
 
     return {
