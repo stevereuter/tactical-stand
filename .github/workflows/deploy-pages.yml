@@ -26,11 +26,11 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v5
 
-            - name: Create versioned zip from source
+            - name: Create versioned zip from web/src
               run: |
                   VERSION="${{ github.event.release.tag_name }}"
                   ZIP_NAME="tactical-stand-${VERSION}.zip"
-                  cd source
+                  cd web/src
                   zip -r "../${ZIP_NAME}" .
 
             - name: Upload zip to release
@@ -55,7 +55,7 @@ jobs:
             - name: Upload artifact
               uses: actions/upload-pages-artifact@v3
               with:
-                  path: source
+                  path: web/src
 
             - name: Deploy to GitHub Pages
               id: deployment

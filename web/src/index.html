@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>UFO Intercept: Tactical Stand</title>
+    <link href="css/style.css" rel="stylesheet" />
+    <script src="scripts/main.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <header class="page-header">
+        <h1 class="text-center">
+            <span class="hide-mobile">UFO Intercept:</span> Tactical Stand
+        </h1>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Start Page -->
+            <div id="startPage" class="col-md-6 text-center md-pad-30">
+                <h2>How to Play</h2>
+                <p>Destroy the invaders spaceships before yours are destroyed. There will be 3 waves for you to defeat. Stalemates will be repeated to determine the victor.</p>
+                <p>
+                    Place you spaceships by tapping the start and end positions of each spaceship, or use the Auto to randomly place them.
+                    <br />
+                    Once all of your spaceships have been placed, set targets that you wish to attack manually or with Auto, Auto will fill remaining targets if some are placed manually first. You get one target for each of you remaining spaceships, except on the final wave.
+                </p>
+                <canvas id="startArea" width="300" height="200"></canvas>
+            </div>
+            <!-- Opponent Area -->
+            <div id="targetPanel" class="col-md-6 hidden text-center">
+                <h2>Invaders Area</h2>
+                <canvas id="opponentArea" width="300" height="420"></canvas>
+            </div>
+            <!-- Player Area -->
+            <div id="playerMap" class="col-md-6 hidden text-center">
+                <h2>Player Area</h2>
+                <canvas id="playerArea" width="300" height="420"></canvas>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
