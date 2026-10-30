@@ -31,7 +31,7 @@ jobs:
                   VERSION="${{ github.event.release.tag_name }}"
                   ZIP_NAME="tactical-stand-${VERSION}.zip"
                   cd web/src
-                  zip -r "../${ZIP_NAME}" .
+                  zip -r "../../${ZIP_NAME}" .
 
             - name: Upload zip to release
               uses: softprops/action-gh-release@v2
