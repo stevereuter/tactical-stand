@@ -165,7 +165,7 @@
                         offset = 8;
                         break;
                     default:
-                        color = "#003300";
+                        color = "Pink";
                         text = "Switch";
                         offset = 2;
                         break;
@@ -1055,7 +1055,7 @@
                                 default:
                                     // Invaders defeated
                                     endMessage = isGameOver
-                                        ? "Victory"
+                                        ? `Victory, ${levels[game.level]} Defeated`
                                         : `${levels[game.level]} Complete`;
                                     game.level += 1;
                                     break;
